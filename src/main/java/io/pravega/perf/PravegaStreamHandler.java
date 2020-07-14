@@ -29,6 +29,7 @@ import io.pravega.client.stream.ReaderGroupConfig;
 import io.pravega.client.admin.ReaderGroupManager;
 import io.pravega.client.stream.ReaderGroup;
 import io.pravega.client.stream.ScalingPolicy;
+import io.pravega.client.stream.RetentionPolicy;
 import io.pravega.client.stream.impl.StreamSegments;
 import io.pravega.client.segment.impl.Segment;
 import io.pravega.client.stream.impl.StreamImpl;
@@ -182,6 +183,7 @@ public class PravegaStreamHandler {
 
         return StreamConfiguration.builder()
             .scalingPolicy(scalingPolicy)
+			.retentionPolicy(RetentionPolicy.bySizeBytes(1000))
             .build();
     }
 }
