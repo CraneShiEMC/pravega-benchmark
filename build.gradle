@@ -25,7 +25,8 @@ buildscript {
         jcenter()
         mavenCentral()
         maven {
-            url "https://oss.jfrog.org/jfrog-dependencies"
+            name "release"
+            url "http://asdrepo.isus.emc.com:8101/artifactory/nautilus-build"
         }
     }
 
