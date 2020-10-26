@@ -34,12 +34,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -127,7 +122,7 @@ public class PravegaPerfTest {
             System.exit(0);
         }
 
-        final ForkJoinPool executor = new ForkJoinPool();
+        final ExecutorService executor = Executors.newCachedThreadPool();
 
         try {
             final List<WriterWorker> producers = perfTest.getProducers();
@@ -353,7 +348,7 @@ public class PravegaPerfTest {
                 if (throughput < 0 && runtimeSec > 0) {
                     eventsPerSec = events / producerCount;
                 } else if (throughput > 0) {
-                    eventsPerSec = (int) (((throughput * 1024 * 1024) / messageSize) / producerCount);
+                    eventsPerSec = (int) (((throughput * 1024 * 1024) / messageSize) / producerCount / streamNum);
                 } else {
                     eventsPerSec = 0;
                 }
