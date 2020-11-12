@@ -25,15 +25,16 @@ import java.util.concurrent.ExecutionException;
 public abstract class ReaderWorker extends Worker implements Callable<Void> {
     private static Logger log = LoggerFactory.getLogger(ReaderWorker.class);
     final private static int MS_PER_SEC = 1000;
-    final private static int READ_DELAY_SEC = 600;
     final private Performance perf;
     final private boolean writeAndRead;
+    final private int readDelay;
 
     ReaderWorker(int readerId, int events, int secondsToRun, long start,
-                 PerfStats stats, String readerGrp, int timeout, boolean writeAndRead) {
+                 PerfStats stats, String readerGrp, int timeout, boolean writeAndRead, int readDelay) {
         super(readerId, events, secondsToRun, 0, start, stats, readerGrp, timeout);
 
         this.writeAndRead = writeAndRead;
+        this.readDelay = readDelay;
         this.perf = createBenchmark();
 
     }
@@ -63,11 +64,11 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     public Void call() throws InterruptedException, ExecutionException, IOException {
         try {
             if(writeAndRead) {
-                log.info("start sleep {} seconds", READ_DELAY_SEC);
-                Thread.sleep(READ_DELAY_SEC);
-                log.info("run reader worker");
+                log.info("start sleep {} seconds", readDelay);
+                Thread.sleep(readDelay * 1000);
             }
             perf.benchmark();
+            log.info("run reader worker");
         } catch (Exception e) {
             log.error("reader worker exception", e);
             throw e;

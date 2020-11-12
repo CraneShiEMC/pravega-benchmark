@@ -58,6 +58,7 @@ public class PravegaPerfTest {
         options.addOption("scope", true, "Scope name");
         options.addOption("stream", true, "Stream name");
         options.addOption("streamNum", true, "Stream number");
+        options.addOption("readDelay", true, "Delay start reader");
         options.addOption("producers", true, "Number of producers");
         options.addOption("consumers", true, "Number of consumers");
         options.addOption("events", true,
@@ -205,6 +206,7 @@ public class PravegaPerfTest {
         final int consumerCount;
         final int segmentCount;
         final int streamNum;
+        final int readDelay;
         final int segmentScaleKBps;
         final int segmentScaleEventsPerSecond;
         final int scaleFactor;
@@ -238,6 +240,7 @@ public class PravegaPerfTest {
             consumerCount = parseIntOption(commandline, "consumers", 0);
             streamNum = parseIntOption(commandline, "streamNum", 1);
             events = parseIntOption(commandline, "events", 0);
+            readDelay = parseIntOption(commandline, "readDelay", 0);
 
             if (commandline.hasOption("flush")) {
                 int flushEvents = Integer.parseInt(commandline.getOptionValue("flush"));
@@ -516,7 +519,7 @@ public class PravegaPerfTest {
                                     runtimeSec, startTime, consumeStats,
                                     rdGrpName, TIMEOUT, writeAndRead, factory,
                                     io.pravega.client.stream.Stream.of(scopeName, streamName),
-                                    readWatermarkPeriodMillis))
+                                    readWatermarkPeriodMillis, readDelay))
                             .collect(Collectors.toList());
                     log.info("---------- Create {} readers for stream {} ----------", readers.size(), streamName);
                     allReaders.addAll(readers);

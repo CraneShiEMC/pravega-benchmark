@@ -114,6 +114,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
     public Void call() throws InterruptedException, ExecutionException, IOException {
         try {
             perf.benchmark();
+            log.info("run writer worker");
         } catch (Exception e) {
             log.error("writer worker exception", e);
             throw e;
@@ -196,7 +197,11 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
                 log.error("write exception", e);
             }
         }
-        flush();
+        try {
+            flush();
+        } catch (Exception e) {
+            log.error("flush exception", e);
+        }
     }
 
 
@@ -225,7 +230,11 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
                 log.error("write exception", e);
             }
         }
-        flush();
+        try {
+            flush();
+        } catch (Exception e) {
+            log.error("flush exception", e);
+        }
     }
 
 

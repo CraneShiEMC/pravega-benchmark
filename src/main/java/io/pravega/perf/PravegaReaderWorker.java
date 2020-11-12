@@ -41,8 +41,8 @@ public class PravegaReaderWorker extends ReaderWorker {
     PravegaReaderWorker(int readerId, int events, int secondsToRun,
                         long start, PerfStats stats, String readergrp,
                         int timeout, boolean writeAndRead, EventStreamClientFactory factory,
-                        Stream stream, long readWatermarkPeriodMillis) {
-        super(readerId, events, secondsToRun, start, stats, readergrp, timeout, writeAndRead);
+                        Stream stream, long readWatermarkPeriodMillis, int readDelay) {
+        super(readerId, events, secondsToRun, start, stats, readergrp, timeout, writeAndRead, readDelay);
 
         final String readerSt = Integer.toString(readerId);
         reader = factory.createReader(
