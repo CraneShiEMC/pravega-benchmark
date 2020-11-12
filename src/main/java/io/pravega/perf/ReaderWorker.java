@@ -67,8 +67,9 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 log.info("start sleep {} seconds", readDelay);
                 Thread.sleep(readDelay * 1000);
             }
-            perf.benchmark();
             log.info("run reader worker");
+            perf.benchmark();
+            log.info("complete reader worker");
         } catch (Exception e) {
             log.error("reader worker exception", e);
             throw e;

@@ -113,8 +113,9 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
     @Override
     public Void call() throws InterruptedException, ExecutionException, IOException {
         try {
-            perf.benchmark();
             log.info("run writer worker");
+            perf.benchmark();
+            log.info("complete writer worker");
         } catch (Exception e) {
             log.error("writer worker exception", e);
             throw e;
