@@ -115,7 +115,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         try {
             perf.benchmark();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("writer worker exception", e);
             throw e;
         }
         return null;
@@ -182,7 +182,8 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         for (int i = 0; i < events; i++) {
             byte[] bytes = timeBuffer.putLong(0, System.currentTimeMillis()).array();
             System.arraycopy(bytes, 0, payload, 0, bytes.length);
-            writeData(payload);
+            try {
+                writeData(payload);
                 /*
                 flush is required here for following reasons:
                 1. The writeData is called for End to End latency mode; hence make sure that data is sent.
@@ -190,7 +191,10 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
                    flushing moderates the kafka producer.
                 3. If the flush called after several iterations, then flush may take too much of time.
                 */
-            eCnt.control(i);
+                eCnt.control(i);
+            } catch (Exception e) {
+                log.error("write exception", e);
+            }
         }
         flush();
     }
@@ -207,7 +211,8 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
             time = System.currentTimeMillis();
             byte[] bytes = timeBuffer.putLong(0, System.currentTimeMillis()).array();
             System.arraycopy(bytes, 0, payload, 0, bytes.length);
-            writeData(payload);
+            try{
+                writeData(payload);
                 /*
                 flush is required here for following reasons:
                 1. The writeData is called for End to End latency mode; hence make sure that data is sent.
@@ -215,7 +220,10 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
                    flushing moderates the kafka producer.
                 3. If the flush called after several iterations, then flush may take too much of time.
                 */
-            eCnt.control(i);
+                eCnt.control(i);
+            } catch (Exception e) {
+                log.error("write exception", e);
+            }
         }
         flush();
     }

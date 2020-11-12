@@ -10,6 +10,9 @@
 
 package io.pravega.perf;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -20,7 +23,9 @@ import java.util.concurrent.ExecutionException;
  * An Abstract class for Readers.
  */
 public abstract class ReaderWorker extends Worker implements Callable<Void> {
+    private static Logger log = LoggerFactory.getLogger(ReaderWorker.class);
     final private static int MS_PER_SEC = 1000;
+    final private static int READ_DELAY_SEC = 600;
     final private Performance perf;
     final private boolean writeAndRead;
 
@@ -57,9 +62,14 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     @Override
     public Void call() throws InterruptedException, ExecutionException, IOException {
         try {
+            if(writeAndRead) {
+                log.info("start sleep {} seconds", READ_DELAY_SEC);
+                Thread.sleep(READ_DELAY_SEC);
+                log.info("run reader worker");
+            }
             perf.benchmark();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("reader worker exception", e);
             throw e;
         }
         return null;
@@ -132,13 +142,17 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         long time = System.currentTimeMillis();
         try {
             while ((time - startTime) < msToRun) {
-                ret = readData();
-                time = System.currentTimeMillis();
-                if (ret != null) {
-                    timeBuffer.clear();
-                    timeBuffer.put(ret, 0, TIME_HEADER_SIZE);
-                    final long start = timeBuffer.getLong(0);
-                    stats.recordTime(start, time, ret.length);
+                try {
+                    ret = readData();
+                    time = System.currentTimeMillis();
+                    if (ret != null) {
+                        timeBuffer.clear();
+                        timeBuffer.put(ret, 0, TIME_HEADER_SIZE);
+                        final long start = timeBuffer.getLong(0);
+                        stats.recordTime(start, time, ret.length);
+                    }
+                } catch (Exception e) {
+                    log.error("read exception", e);
                 }
             }
         } finally {
