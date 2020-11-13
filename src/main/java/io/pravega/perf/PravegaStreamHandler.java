@@ -183,7 +183,7 @@ public class PravegaStreamHandler {
 
         return StreamConfiguration.builder()
             .scalingPolicy(scalingPolicy)
-			.retentionPolicy(RetentionPolicy.bySizeBytes(1000))
+			.retentionPolicy(RetentionPolicy.bySizeBytes(10000000))
             .build();
     }
 }

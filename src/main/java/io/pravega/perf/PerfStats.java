@@ -439,6 +439,6 @@ public class PerfStats {
      * @param bytes     number of bytes written or read
      **/
     public void recordTime(long startTime, long endTime, int bytes) {
-//        queue.add(new TimeStamp(startTime, endTime, bytes));
+        queue.add(new TimeStamp(startTime, endTime, bytes));
     }
 }
