@@ -87,7 +87,6 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
                 if (transaction == null) {
                     transaction = producer.beginTxn();
                 }
-                log.info("Event write: {}", new String(data));
                 if(isEnableRoutingKey) {
                     String dataString = new String(data);
                     String routingKey = dataString.split("-")[1];
@@ -96,6 +95,8 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
                 } else {
                     transaction.writeEvent(data);
                 }
+                transaction.flush();
+                log.info("Event write: {}", new String(data));
                 record.accept(time, System.currentTimeMillis(), messageSize);
                 eventCount++;
                 if (eventCount >= transactionsPerCommit) {
@@ -106,6 +107,7 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
                     } else {
                         transaction.commit();
                     }
+                    log.info("Commit transaction {}", transaction.getTxnId().toString());
                     transaction = null;
                 }
             }

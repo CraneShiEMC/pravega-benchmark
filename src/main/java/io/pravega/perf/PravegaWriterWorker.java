@@ -65,12 +65,12 @@ public class PravegaWriterWorker extends WriterWorker {
 
     @Override
     public long recordWrite(byte[] data, TriConsumer record) {
-        CompletableFuture ret;
+        CompletableFuture<Void> ret;
         final long time = System.currentTimeMillis();
-        log.info("Event write: {}", new String(data));
         ret = writeEvent(producer, data);
         ret.thenAccept(d -> {
             record.accept(time, System.currentTimeMillis(), data.length);
+            log.info("Event write: {}", new String(data));
         });
         noteTimePeriodically();
         return time;
@@ -78,15 +78,16 @@ public class PravegaWriterWorker extends WriterWorker {
 
     @Override
     public void writeData(byte[] data) {
-        writeEvent(producer, data);
-        log.info("Event write: {}", new String(data));
+        writeEvent(producer, data).thenAccept(d -> {
+            log.info("Event write: {}", new String(data));
+        });
         producer.writeEvent(data);
         noteTimePeriodically();
     }
 
 
-    public CompletableFuture writeEvent(EventStreamWriter<byte[]> producer, byte[] data) {
-        CompletableFuture ret;
+    private CompletableFuture<Void> writeEvent(EventStreamWriter<byte[]> producer, byte[] data) {
+        CompletableFuture<Void> ret;
         if(isEnableRoutingKey) {
             String dataString = new String(data);
             String routingKey = dataString.split("-")[1];
