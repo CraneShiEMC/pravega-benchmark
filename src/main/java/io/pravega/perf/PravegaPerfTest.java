@@ -458,7 +458,9 @@ public class PravegaPerfTest {
 
             for (int i = 0; i < streamNum; i++) {
                 String newStreamName = streamName + i;
+                log.info("--------------- streamNum = {} ------------------", streamNum);
                 if(streamNum == 1) {
+                    log.info("--------------- get streamNum ------------------");
                     newStreamName = streamName;
                 }
                 String newRdGrpName = rdGrpName + "-" + i;
