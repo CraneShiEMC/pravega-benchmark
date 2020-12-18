@@ -72,7 +72,7 @@ public class PutbackReaderWorker extends ReaderWorker {
                     while ((time - startTime) < msToRun && !Thread.interrupted()) {
                         EventRead<byte[]> event = reader.readNextEvent(timeout);
                         if (event.isCheckpoint()) {
-                            log.info("received checkpoint {}", event.getCheckpointName());
+                            log.info("received checkpoint {} with position {}", event.getCheckpointName(), event.getPosition().toString());
                         } else {
                             byte[] data = event.getEvent();
                             if (data != null) {
