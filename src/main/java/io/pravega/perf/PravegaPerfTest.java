@@ -458,7 +458,7 @@ public class PravegaPerfTest {
                     bgExecutor);
 
             for (int i = 0; i < streamNum; i++) {
-                String newStreamName = streamName + i;
+                String newStreamName = streamName + "-" + i;
                 if(streamNum == 1) {
                     newStreamName = streamName;
                 }
@@ -538,11 +538,13 @@ public class PravegaPerfTest {
         public List<ReaderWorker> getConsumers() throws URISyntaxException {
             final List<ReaderWorker> allReaders = new ArrayList<>();
             if(putback){
-                log.info("put back mode, create {} readers", consumerCount);
-                allReaders.add(new PutbackReaderWorker(consumerCount, eventsPerConsumer,
-                        runtimeSec, startTime, consumeStats,
-                        rdGrpName, streamName, TIMEOUT, writeAndRead, factory,
-                        io.pravega.client.stream.Stream.of(scopeName, streamName)));
+                streamMap.forEach((streamName, rdGrpName) -> {
+                    log.info("put back mode, create {} readers", consumerCount);
+                    allReaders.add(new PutbackReaderWorker(consumerCount, eventsPerConsumer,
+                            runtimeSec, startTime, consumeStats,
+                            rdGrpName, streamName, TIMEOUT, writeAndRead, factory,
+                            io.pravega.client.stream.Stream.of(scopeName, streamName)));
+                });
             } else if (consumerCount > 0) {
                 streamMap.forEach((streamName, rdGrpName) -> {
                     final List<ReaderWorker> readers;
