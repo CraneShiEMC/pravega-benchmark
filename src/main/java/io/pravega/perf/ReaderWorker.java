@@ -23,22 +23,27 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     final private static int MS_PER_SEC = 1000;
     final private Performance perf;
     final private boolean writeAndRead;
-
+    final private boolean putback;
     ReaderWorker(int readerId, int events, int secondsToRun, long start,
-                 PerfStats stats, String readerGrp, int timeout, boolean writeAndRead) {
+                 PerfStats stats, String readerGrp, int timeout, boolean writeAndRead, boolean putback) {
         super(readerId, events, secondsToRun, 0, start, stats, readerGrp, timeout);
 
         this.writeAndRead = writeAndRead;
         this.perf = createBenchmark();
+        this.putback = putback;
 
     }
 
     private Performance createBenchmark() {
         final Performance perfReader;
-        if (secondsToRun > 0) {
-            perfReader = writeAndRead ? this::EventsTimeReaderRW : this::EventsTimeReader;
+        if(putback) {
+            perfReader = this::EventsReaderPutback;
         } else {
-            perfReader = writeAndRead ? this::EventsReaderRW : this::EventsReader;
+            if (secondsToRun > 0) {
+                perfReader = writeAndRead ? this::EventsTimeReaderRW : this::EventsTimeReader;
+            } else {
+                perfReader = writeAndRead ? this::EventsReaderRW : this::EventsReader;
+            }
         }
         return perfReader;
     }
@@ -81,6 +86,10 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         } finally {
             close();
         }
+    }
+
+    public void EventsReaderPutback() {
+
     }
 
 

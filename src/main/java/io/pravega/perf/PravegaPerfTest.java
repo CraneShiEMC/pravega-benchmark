@@ -59,7 +59,7 @@ public class PravegaPerfTest {
         final CommandLineParser parser;
         CommandLine commandline = null;
         final long startTime = System.currentTimeMillis();
-
+        options.addOption("putback", true, "putback mode");
         options.addOption("controller", true, "Controller URI");
         options.addOption("scope", true, "Scope name");
         options.addOption("stream", true, "Stream name");
@@ -198,7 +198,7 @@ public class PravegaPerfTest {
     static private abstract class Test {
         static final int MAXTIME = 60 * 60 * 24;
         static final int DEFAULT_REPORTING_INTERVAL = 5000;
-        static final int TIMEOUT = 1000;
+        static final int TIMEOUT = 30 * 1000;
         static final String SCOPE = "Scope";
 
         final String controllerUri;
@@ -207,6 +207,7 @@ public class PravegaPerfTest {
         final String rdGrpName;
         final String scopeName;
         final boolean recreate;
+        final boolean putback;
         final boolean writeAndRead;
         final int producerCount;
         final int consumerCount;
@@ -275,7 +276,7 @@ public class PravegaPerfTest {
             segmentScaleKBps = parseIntOption(commandline, "segmentScaleKBps", 0);
             segmentScaleEventsPerSecond = parseIntOption(commandline, "segmentScaleEventsPerSecond", 0);
             scaleFactor = parseIntOption(commandline, "scaleFactor", 2);
-
+            putback = Boolean.parseBoolean(commandline.getOptionValue("putback"));
             if (commandline.hasOption("recreate")) {
                 recreate = Boolean.parseBoolean(commandline.getOptionValue("recreate"));
             } else {
@@ -494,10 +495,10 @@ public class PravegaPerfTest {
         }
 
         public List<WriterWorker> getProducers() {
-            final List<WriterWorker> allWriters;
-
-            if (producerCount > 0) {
-                allWriters = new ArrayList<>();
+            final List<WriterWorker> allWriters = new ArrayList<>();
+            if(putback){
+                log.info("putback mode, no writer");
+            } else if (producerCount > 0) {
                 streamMap.forEach((streamName, readerGroup) -> {
                     final AtomicLong[] seqNum = getAtomicNum();
                     final List<WriterWorker> writers;
@@ -529,17 +530,20 @@ public class PravegaPerfTest {
                     log.info("---------- Create {} writes for stream {} ----------", writers.size(), streamName);
                     allWriters.addAll(writers);
                 });
-            } else {
-                allWriters = null;
             }
 
             return allWriters;
         }
 
         public List<ReaderWorker> getConsumers() throws URISyntaxException {
-            final List<ReaderWorker> allReaders;
-            if (consumerCount > 0) {
-                allReaders = new ArrayList<>();
+            final List<ReaderWorker> allReaders = new ArrayList<>();
+            if(putback){
+                log.info("put back mode, create {} readers", consumerCount);
+                allReaders.add(new PutbackReaderWorker(consumerCount, eventsPerConsumer,
+                        runtimeSec, startTime, consumeStats,
+                        rdGrpName, streamName, TIMEOUT, writeAndRead, factory,
+                        io.pravega.client.stream.Stream.of(scopeName, streamName)));
+            } else if (consumerCount > 0) {
                 streamMap.forEach((streamName, rdGrpName) -> {
                     final List<ReaderWorker> readers;
                     readers = IntStream.range(0, consumerCount)
@@ -554,8 +558,6 @@ public class PravegaPerfTest {
                     allReaders.addAll(readers);
                 });
 
-            } else {
-                allReaders = null;
             }
             return allReaders;
         }
@@ -575,7 +577,7 @@ public class PravegaPerfTest {
             return "streamName='" + streamName + '\'' +
                 ", rdGrpName='" + rdGrpName + '\'' +
                 ", scopeName='" + scopeName + '\'' +
-                ", recreate=" + recreate +
+                ", recreate=" + recreate + ", putback=" + putback +
                 ", writeAndRead=" + writeAndRead +
                 ", producerCount=" + producerCount +
                 ", consumerCount=" + consumerCount +
