@@ -27,11 +27,9 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     ReaderWorker(int readerId, int events, int secondsToRun, long start,
                  PerfStats stats, String readerGrp, int timeout, boolean writeAndRead, boolean putback) {
         super(readerId, events, secondsToRun, 0, start, stats, readerGrp, timeout);
-
+        this.putback = putback;
         this.writeAndRead = writeAndRead;
         this.perf = createBenchmark();
-        this.putback = putback;
-
     }
 
     private Performance createBenchmark() {

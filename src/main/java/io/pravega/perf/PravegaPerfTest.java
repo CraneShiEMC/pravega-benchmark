@@ -466,7 +466,7 @@ public class PravegaPerfTest {
                 PravegaStreamHandler streamHandle = new PravegaStreamHandler(scopeName, newStreamName, newRdGrpName, controllerUri, segmentCount,
                         segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
 
-                if (producerCount > 0 && segmentCount > 0 && !streamHandle.create()) {
+                if ((putback || (producerCount > 0 && segmentCount > 0)) && !streamHandle.create()) {
                     if (recreate) {
                         streamHandle.recreate();
                     } else {
