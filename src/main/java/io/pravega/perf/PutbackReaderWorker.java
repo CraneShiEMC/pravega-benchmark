@@ -16,7 +16,7 @@ public class PutbackReaderWorker extends ReaderWorker {
     private final Random r = new Random();
     private final int events;
     private long consumeTime = 500;
-    private static final int EVENT_LOSS_THRESHOLD = 100;
+    private static final int EVENT_LOSS_THRESHOLD = 3600 * 1000;
     private long consumeTimeVariance = 200;
     private final List<EventStreamReader<byte[]>> readers = new ArrayList<>();
     private final Stream stream;
@@ -69,9 +69,12 @@ public class PutbackReaderWorker extends ReaderWorker {
                 Set<String> writtenEventsCopy = new HashSet<>(writtenEvents);
                 writtenEventsCopy.forEach( e -> {
                     String[] tokens = e.split("-");
-                    long epoch = Long.parseLong(tokens[1]);
-                    if(currentEpoch.get() - epoch > EVENT_LOSS_THRESHOLD){
-                        log.error("WSCritical: event loss for {} , current epoch {} , event epoch {}", new Object[]{e, currentEpoch.get(), epoch});
+                    long timestamp = Long.parseLong(tokens[2]);
+                    if(System.currentTimeMillis() - timestamp > EVENT_LOSS_THRESHOLD){
+                        Date date = new Date(timestamp);
+                        Date curDate = new Date(System.currentTimeMillis());
+                        log.error("WSCritical: event loss for {} , written time {}, current time {}",
+                                new Object[]{e, date.toString(), curDate.toString()});
                     }
                 });
 
