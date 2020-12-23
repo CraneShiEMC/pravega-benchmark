@@ -98,7 +98,8 @@ public class PutbackReaderWorker extends ReaderWorker {
                                     log.error("received event incorrect {}", received);
                                 } else {
                                     if (!writtenEvents.remove(received)) {
-                                        log.info("received event {} is duplicate", received);
+                                        writtenEvents.add(received);
+                                        log.info("event {} not acked", received);
                                     }
                                     if ((time - startTime) < msToRun) {
                                         Thread.sleep(consumeTime + Math.abs((long) Math.floor(consumeTimeVariance * r.nextGaussian())));
@@ -116,8 +117,10 @@ public class PutbackReaderWorker extends ReaderWorker {
                                         producer.writeEvent(send.getBytes())
                                                 .thenRunAsync(() -> {
                                                     log.info("written event {} at {}", send, System.currentTimeMillis());
-                                                    if (!writtenEvents.add(send)) {
-                                                        log.error("event {} already written", send);
+                                                    if(!writtenEvents.add(send)){
+                                                        if (writtenEvents.remove(send)) {
+                                                            log.info("event {} already received", send);
+                                                        }
                                                     }
                                                 }, executorService).join();
                                     } else {
