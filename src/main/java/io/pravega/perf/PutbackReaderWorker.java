@@ -16,7 +16,7 @@ public class PutbackReaderWorker extends ReaderWorker {
     private final Random r = new Random();
     private final int events;
     private long consumeTime = 500;
-    private static final int EVENT_LOSS_THRESHOLD = 50;
+    private static final int EVENT_LOSS_THRESHOLD = 100;
     private long consumeTimeVariance = 200;
     private final List<EventStreamReader<byte[]>> readers = new ArrayList<>();
     private final Stream stream;
@@ -25,7 +25,7 @@ public class PutbackReaderWorker extends ReaderWorker {
     private final ExecutorService readerExecutorService;
     private final ScheduledExecutorService validatorService = Executors.newSingleThreadScheduledExecutor();
     private final List<Future<?>> futures = new ArrayList<>();
-    private final Set<String> writtenEvents = new CopyOnWriteArraySet<>();
+    private final Set<String> writtenEvents = ConcurrentHashMap.newKeySet();
     private final AtomicLong currentEpoch = new AtomicLong(0);
     PutbackReaderWorker(int consumerCount, int events, int secondsToRun, long start, PerfStats stats, String readerGrp, String streamName,
                         int timeout, boolean writeAndRead, EventStreamClientFactory factory,
@@ -55,6 +55,7 @@ public class PutbackReaderWorker extends ReaderWorker {
     public void close() {
         readers.forEach(EventStreamReader::close);
         producer.close();
+        validatorService.shutdownNow();
         futures.forEach(f-> f.cancel(true));
         readerExecutorService.shutdownNow();
         executorService.shutdownNow();
@@ -70,7 +71,7 @@ public class PutbackReaderWorker extends ReaderWorker {
                     String[] tokens = e.split("-");
                     long epoch = Long.parseLong(tokens[1]);
                     if(currentEpoch.get() - epoch > EVENT_LOSS_THRESHOLD){
-                        log.error("WSCritical: event loss for {}, current epoch {}, event epoch {}", new Object[]{e, currentEpoch.get(), epoch});
+                        log.error("WSCritical: event loss for {} , current epoch {} , event epoch {}", new Object[]{e, currentEpoch.get(), epoch});
                     }
                 });
 
@@ -80,7 +81,7 @@ public class PutbackReaderWorker extends ReaderWorker {
                 try {
                     final long msToRun = secondsToRun * 1000;
                     long time = System.currentTimeMillis();
-                    while ((time - startTime) < msToRun && !Thread.interrupted()) {
+                    while (!writtenEvents.isEmpty() && !Thread.interrupted()) {
                         EventRead<byte[]> event = reader.readNextEvent(timeout);
                         if (event.isCheckpoint()) {
                             log.info("received checkpoint {} with position {}", event.getCheckpointName(), event.getPosition().toString());
@@ -93,29 +94,32 @@ public class PutbackReaderWorker extends ReaderWorker {
                                 if (tokens.length != 3) {
                                     log.error("received event incorrect {}", received);
                                 } else {
-                                    if(!writtenEvents.remove(received)){
+                                    if (!writtenEvents.remove(received)) {
                                         log.info("received event {} is duplicate", received);
                                     }
-                                    Thread.sleep(consumeTime + Math.abs((long) Math.floor(consumeTimeVariance * r.nextGaussian())));
-                                    String id = tokens[0];
-                                    long epoch = Long.parseLong(tokens[1]);
-                                    if(epoch > currentEpoch.get()){
-                                        long old = currentEpoch.get();
-                                        while(!currentEpoch.compareAndSet(old, epoch)){
-                                            old = currentEpoch.get();
+                                    if ((time - startTime) < msToRun) {
+                                        Thread.sleep(consumeTime + Math.abs((long) Math.floor(consumeTimeVariance * r.nextGaussian())));
+                                        String id = tokens[0];
+                                        long epoch = Long.parseLong(tokens[1]);
+                                        if (epoch > currentEpoch.get()) {
+                                            long old = currentEpoch.get();
+                                            while (!currentEpoch.compareAndSet(old, epoch)) {
+                                                old = currentEpoch.get();
+                                            }
+                                            log.info("increase epoch current epoch from {} to {}", old, currentEpoch.get());
                                         }
-                                        log.info("increase epoch current epoch from {} to {}", old, currentEpoch.get());
+                                        epoch++;
+                                        final String send = id + "-" + epoch + "-" + System.currentTimeMillis();
+                                        producer.writeEvent(send.getBytes())
+                                                .thenRunAsync(() -> {
+                                                    log.info("written event {} at {}", send, System.currentTimeMillis());
+                                                    if (!writtenEvents.add(send)) {
+                                                        log.error("event {} already written", send);
+                                                    }
+                                                }, executorService).join();
+                                    } else {
+                                        log.info("stop write new events, and wait {} written events to be received", writtenEvents.size());
                                     }
-                                    epoch++;
-
-                                    final String send = id + "-" + epoch + "-" + System.currentTimeMillis();
-                                    producer.writeEvent(send.getBytes())
-                                            .thenRunAsync(() -> {
-                                                log.info("written event {} at {}", send, System.currentTimeMillis());
-                                                if(!writtenEvents.add(send)){
-                                                    log.error("event {} already written", send);
-                                                }
-                                            }, executorService).join();
                                 }
                             } else {
                                 log.info("null event");
@@ -139,6 +143,7 @@ public class PutbackReaderWorker extends ReaderWorker {
                     log.error("met exception", e);
                 }
             });
+            writtenEvents.forEach( e -> log.error("WSCritical: event loss for {} , final epoch {}", e, currentEpoch.get()));
         } catch (Throwable t) {
             log.error("met exception", t);
         }
