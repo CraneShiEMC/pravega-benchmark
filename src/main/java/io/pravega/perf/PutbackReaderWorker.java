@@ -16,7 +16,7 @@ public class PutbackReaderWorker extends ReaderWorker {
     private final Random r = new Random();
     private final int events;
     private long consumeTime = 500;
-    private static final int EVENT_LOSS_THRESHOLD = 20;
+    private static final int EVENT_LOSS_THRESHOLD = 50;
     private long consumeTimeVariance = 200;
     private final List<EventStreamReader<byte[]>> readers = new ArrayList<>();
     private final Stream stream;
@@ -115,7 +115,7 @@ public class PutbackReaderWorker extends ReaderWorker {
                                                 if(!writtenEvents.add(send)){
                                                     log.error("event {} already written", send);
                                                 }
-                                            }, executorService);
+                                            }, executorService).join();
                                 }
                             } else {
                                 log.info("null event");
