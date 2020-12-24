@@ -27,11 +27,13 @@ public class PutbackReaderWorker extends ReaderWorker {
     private final List<Future<?>> futures = new ArrayList<>();
     private final Set<String> writtenEvents = ConcurrentHashMap.newKeySet();
     private final AtomicLong currentEpoch = new AtomicLong(0);
+    private final Object lock = new Object();
+
     PutbackReaderWorker(int consumerCount, int events, int secondsToRun, long start, PerfStats stats, String readerGrp, String streamName,
                         int timeout, boolean writeAndRead, EventStreamClientFactory factory,
                         Stream stream) {
         super(consumerCount, events, secondsToRun, start, stats, readerGrp, timeout, writeAndRead, true);
-        for (int i = 0; i < consumerCount; i++){
+        for (int i = 0; i < consumerCount; i++) {
             final String readerSt = "reader-" + i;
             this.readers.add(factory.createReader(
                     readerSt, readerGrp, new ByteArraySerializer(), ReaderConfig.builder().build()));
@@ -56,7 +58,7 @@ public class PutbackReaderWorker extends ReaderWorker {
         readers.forEach(EventStreamReader::close);
         producer.close();
         validatorService.shutdownNow();
-        futures.forEach(f-> f.cancel(true));
+        futures.forEach(f -> f.cancel(true));
         readerExecutorService.shutdownNow();
         executorService.shutdownNow();
     }
@@ -67,10 +69,10 @@ public class PutbackReaderWorker extends ReaderWorker {
             writeInitialEvents();
             validatorService.scheduleWithFixedDelay(() -> {
                 Set<String> writtenEventsCopy = new HashSet<>(writtenEvents);
-                writtenEventsCopy.forEach( e -> {
+                writtenEventsCopy.forEach(e -> {
                     String[] tokens = e.split("-");
                     long timestamp = Long.parseLong(tokens[2]);
-                    if(System.currentTimeMillis() - timestamp > EVENT_LOSS_THRESHOLD){
+                    if (System.currentTimeMillis() - timestamp > EVENT_LOSS_THRESHOLD) {
                         Date date = new Date(timestamp);
                         Date curDate = new Date(System.currentTimeMillis());
                         log.error("WSCritical: event loss for {} , written time {}, current time {}",
@@ -78,7 +80,7 @@ public class PutbackReaderWorker extends ReaderWorker {
                     }
                 });
 
-            }, 1 ,1, TimeUnit.MINUTES);
+            }, 1, 1, TimeUnit.MINUTES);
             log.info("written {} events, start loop back", events);
             readers.forEach(reader -> futures.add(readerExecutorService.submit(() -> {
                 try {
@@ -97,71 +99,81 @@ public class PutbackReaderWorker extends ReaderWorker {
                                 if (tokens.length != 3) {
                                     log.error("received event incorrect {}", received);
                                 } else {
-                                    if (!writtenEvents.remove(received)) {
-                                        writtenEvents.add(received);
-                                        log.info("event {} not acked", received);
-                                    }
-                                    if ((time - startTime) < msToRun) {
-                                        Thread.sleep(consumeTime + Math.abs((long) Math.floor(consumeTimeVariance * r.nextGaussian())));
-                                        String id = tokens[0];
-                                        long epoch = Long.parseLong(tokens[1]);
-                                        if (epoch > currentEpoch.get()) {
-                                            long old = currentEpoch.get();
-                                            while (!currentEpoch.compareAndSet(old, epoch)) {
-                                                old = currentEpoch.get();
-                                            }
-                                            log.info("increase epoch current epoch from {} to {}", old, currentEpoch.get());
+                                    synchronized (lock) {
+                                        if (!writtenEvents.remove(received)) {
+                                            writtenEvents.add(received);
+                                            log.info("event {} not acked", received);
                                         }
-                                        epoch++;
-                                        final String send = id + "-" + epoch + "-" + System.currentTimeMillis();
-                                        producer.writeEvent(send.getBytes())
-                                                .thenRunAsync(() -> {
-                                                    log.info("written event {} at {}", send, System.currentTimeMillis());
-                                                    if(!writtenEvents.add(send)){
-                                                        if (writtenEvents.remove(send)) {
-                                                            log.info("event {} already received", send);
-                                                        }
-                                                    }
-                                                }, executorService).join();
-                                    } else {
-                                        log.info("stop write new events, and wait {} written events to be received", writtenEvents.size());
                                     }
                                 }
-                            } else {
-                                log.info("null event");
-                            }
+                                if ((time - startTime) < msToRun) {
+                                    Thread.sleep(consumeTime + Math.abs((long) Math.floor(consumeTimeVariance * r.nextGaussian())));
+                                    String id = tokens[0];
+                                    long epoch = Long.parseLong(tokens[1]);
+                                    if (epoch > currentEpoch.get()) {
+                                        long old = currentEpoch.get();
+                                        while (!currentEpoch.compareAndSet(old, epoch)) {
+                                            old = currentEpoch.get();
+                                        }
+                                        log.info("increase epoch current epoch from {} to {}", old, currentEpoch.get());
+                                    }
+                                    epoch++;
+                                    final String send = id + "-" + epoch + "-" + System.currentTimeMillis();
+                                    producer.writeEvent(send.getBytes())
+                                            .thenRunAsync(() -> {
+                                                log.info("written event {} at {}", send, System.currentTimeMillis());
+                                                synchronized (lock) {
+                                                    if (!writtenEvents.add(send)) {
+                                                        if (writtenEvents.remove(send)) {
+                                                            log.info("event {} already received", send);
+                                                        } else {
+                                                            log.error("event {} remove failed", send);
+                                                        }
+                                                    }
+                                                }
+                                            }, executorService).join();
+                                } else {
+                                    log.info("stop write new events, and wait {} written events to be received", writtenEvents.size());
+                                }
+                        } else{
+                            log.info("null event");
                         }
-                        time = System.currentTimeMillis();
                     }
-                } catch (Exception e) {
-                    log.error("met exception", e);
-                } finally {
-                    log.info("close putback reader");
-                    close();
+                    time = System.currentTimeMillis();
                 }
-            })));
-            futures.forEach(f -> {
-                try {
-                    f.get();
-                } catch (InterruptedException e) {
-                    log.error("InterruptedException", e);
-                } catch (ExecutionException e) {
-                    log.error("met exception", e);
-                }
-            });
-            writtenEvents.forEach( e -> log.error("WSCritical: event loss for {} , final epoch {}", e, currentEpoch.get()));
-        } catch (Throwable t) {
-            log.error("met exception", t);
-        }
+            } catch(Exception e){
+                log.error("met exception", e);
+            } finally{
+                log.info("close putback reader");
+                close();
+            }
+        })));
+        futures.forEach(f -> {
+            try {
+                f.get();
+            } catch (InterruptedException e) {
+                log.error("InterruptedException", e);
+            } catch (ExecutionException e) {
+                log.error("met exception", e);
+            }
+        });
+        writtenEvents.forEach(e -> log.error("WSCritical: event loss for {} , final epoch {}", e, currentEpoch.get()));
+    } catch(
+    Throwable t)
+
+    {
+        log.error("met exception", t);
     }
 
-    private void writeInitialEvents(){
-        for (int i = 0; i < events; i++){
-        final String send = "event" + i + "-" + 0 + "-" + System.currentTimeMillis();
-        producer.writeEvent(send.getBytes())
-                .thenRunAsync(() -> log.info("written event {} at {}",
-                        send, System.currentTimeMillis()), executorService).join();
-        writtenEvents.add(send);
+}
+
+    private void writeInitialEvents() {
+        for (int i = 0; i < events; i++) {
+            final String send = "event" + i + "-" + 0 + "-" + System.currentTimeMillis();
+            producer.writeEvent(send.getBytes())
+                    .thenRunAsync(() -> log.info("written event {} at {}",
+                            send, System.currentTimeMillis()), executorService).join();
+            writtenEvents.add(send);
         }
     }
 }
