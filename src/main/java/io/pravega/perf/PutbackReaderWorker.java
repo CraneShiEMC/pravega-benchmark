@@ -158,10 +158,11 @@ public class PutbackReaderWorker extends ReaderWorker {
             }
         });
         writtenEvents.forEach(e -> log.error("WSCritical: event loss for {} , final epoch {}", e, currentEpoch.get()));
-    } catch(
-    Throwable t)
-
-    {
+        log.info("finished evetns integrity test");
+        while(true){
+            Thread.sleep(3600 * 1000);
+        }
+    } catch(Throwable t) {
         log.error("met exception", t);
     }
 
