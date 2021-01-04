@@ -170,8 +170,8 @@ public class PutbackReaderWorker extends ReaderWorker {
             while(true){
                 Thread.sleep(3600 * 1000);
             }
-        }catch(Throwable t){
-            log.error("met exception", t);
+        }catch(Throwable e){
+            log.error("met exception", e);
         }
     }
 
