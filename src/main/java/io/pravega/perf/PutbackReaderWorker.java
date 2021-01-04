@@ -166,8 +166,12 @@ public class PutbackReaderWorker extends ReaderWorker {
     } catch(Throwable t) {
         log.error("met exception", t);
         log.info("finished evetns integrity test");
-        while(true){
-            Thread.sleep(3600 * 1000);
+        try {
+            while(true){
+                Thread.sleep(3600 * 1000);
+            }
+        }catch(Throwable t){
+            log.error("met exception", t);
         }
     }
 
