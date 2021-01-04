@@ -106,7 +106,7 @@ public class PutbackReaderWorker extends ReaderWorker {
                                         }
                                     }
                                 }
-                                log.info("time-startTime", time-startTime);
+                                log.info("startTime", startTime);
                                 if ((time - startTime) < msToRun) {
                                     Thread.sleep(consumeTime + Math.abs((long) Math.floor(consumeTimeVariance * r.nextGaussian())));
                                     String id = tokens[0];
@@ -165,6 +165,10 @@ public class PutbackReaderWorker extends ReaderWorker {
         }
     } catch(Throwable t) {
         log.error("met exception", t);
+        log.info("finished evetns integrity test");
+        while(true){
+            Thread.sleep(3600 * 1000);
+        }
     }
 
 }
