@@ -106,7 +106,6 @@ public class PutbackReaderWorker extends ReaderWorker {
                                         }
                                     }
                                 }
-                                log.info("startTime {}", startTime);
                                 if ((time - startTime) < msToRun) {
                                     Thread.sleep(consumeTime + Math.abs((long) Math.floor(consumeTimeVariance * r.nextGaussian())));
                                     String id = tokens[0];
