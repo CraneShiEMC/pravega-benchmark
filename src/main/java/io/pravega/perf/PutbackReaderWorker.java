@@ -106,7 +106,7 @@ public class PutbackReaderWorker extends ReaderWorker {
                                         }
                                     }
                                 }
-                                log.info("startTime", startTime);
+                                log.info("startTime {}", startTime);
                                 if ((time - startTime) < msToRun) {
                                     Thread.sleep(consumeTime + Math.abs((long) Math.floor(consumeTimeVariance * r.nextGaussian())));
                                     String id = tokens[0];
@@ -159,22 +159,18 @@ public class PutbackReaderWorker extends ReaderWorker {
             }
         });
         writtenEvents.forEach(e -> log.error("WSCritical: event loss for {} , final epoch {}", e, currentEpoch.get()));
-        log.info("finished evetns integrity test");
-        while(true){
-            Thread.sleep(3600 * 1000);
-        }
     } catch(Throwable t) {
         log.error("met exception", t);
-        log.info("finished evetns integrity test");
-        try {
-            while(true){
-                Thread.sleep(3600 * 1000);
+    } finally {
+            log.info("finished events integrity test");
+            try {
+                while(true){
+                    Thread.sleep(3600 * 1000);
+                }
+            }catch(Throwable e){
+                log.error("met exception", e);
             }
-        }catch(Throwable e){
-            log.error("met exception", e);
         }
-    }
-
 }
 
     private void writeInitialEvents() {

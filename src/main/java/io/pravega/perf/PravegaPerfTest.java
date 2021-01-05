@@ -164,6 +164,8 @@ public class PravegaPerfTest {
             perfTest.start(System.currentTimeMillis());
             log.info("------------- Start writer/read, worker number is {} ---------------", workers.size());
             executor.invokeAll(workers);
+            log.info("finished events integrity test");
+
             executor.shutdown();
             executor.awaitTermination(1, TimeUnit.SECONDS);
             perfTest.shutdown(System.currentTimeMillis());
@@ -176,6 +178,15 @@ public class PravegaPerfTest {
             perfTest.closeReaderGroup();
         } catch (Exception ex) {
             ex.printStackTrace();
+        } finally {
+            log.info("finished test");
+            try {
+                while(true){
+                    Thread.sleep(3600 * 1000);
+                }
+            } catch(Throwable e){
+                log.error("met exception", e);
+            }
         }
         System.exit(0);
     }
