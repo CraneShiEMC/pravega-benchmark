@@ -162,7 +162,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
     private void EventsWriterTimeSleep() throws InterruptedException, IOException {
         log.info("EventsWriterTimeSleep: Running");
         final long msToRun = secondsToRun * MS_PER_SEC;
-        RateLimiter rateLimiter = new RateLimiter.create(eventsPerSec);;
+        RateLimiter rateLimiter = RateLimiter.create(eventsPerSec);;
         long time = System.currentTimeMillis();
         final EventsController eCnt = new EventsController(time, eventsPerSec);
         long msElapsed = time - startTime;
