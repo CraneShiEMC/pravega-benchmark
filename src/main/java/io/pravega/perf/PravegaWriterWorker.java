@@ -66,7 +66,6 @@ public class PravegaWriterWorker extends WriterWorker {
         final long time = System.currentTimeMillis();
         ret = producer.writeEvent(data);
         ret.thenAccept(d -> {
-            log.info("write event");
             record.accept(time, System.currentTimeMillis(), data.length);
         });
         noteTimePeriodically();
