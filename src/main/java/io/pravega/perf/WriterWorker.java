@@ -168,8 +168,8 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         while (msElapsed < msToRun) {
             for (int i = 0; (msElapsed < msToRun) && (i < EventsPerFlush); i++) {
                 time = recordWrite(payload, stats::recordTime);
-                eCnt.control(cnt++, time);
-                msElapsed = time - startTime;
+//                eCnt.control(cnt++, time);
+//                msElapsed = time - startTime;
             }
             flush();
         }

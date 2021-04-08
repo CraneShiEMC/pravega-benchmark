@@ -352,6 +352,7 @@ public class PravegaPerfTest {
                     eventsPerSec = events / producerCount;
                 } else if (throughput > 0) {
                     eventsPerSec = (int) (((throughput * 1024 * 1024) / messageSize) / producerCount / streamNum);
+                    log.info("eventsPerSec {}", eventsPerSec);
                 } else {
                     eventsPerSec = 0;
                 }
