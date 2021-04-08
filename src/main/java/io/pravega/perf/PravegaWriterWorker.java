@@ -64,11 +64,10 @@ public class PravegaWriterWorker extends WriterWorker {
     public long recordWrite(byte[] data, TriConsumer record) {
         CompletableFuture ret;
         final long time = System.currentTimeMillis();
-        rateLimiter.acquire(1);
         ret = producer.writeEvent(data);
         ret.thenAccept(d -> {
+            log.info("write event");
             record.accept(time, System.currentTimeMillis(), data.length);
-            log.info("write event bytes {} at  {}",data.length, System.currentTimeMillis());
         });
         noteTimePeriodically();
         return time;

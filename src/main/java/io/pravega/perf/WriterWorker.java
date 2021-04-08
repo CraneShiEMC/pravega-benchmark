@@ -161,6 +161,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
     private void EventsWriterTimeSleep() throws InterruptedException, IOException {
         log.info("EventsWriterTimeSleep: Running");
         final long msToRun = secondsToRun * MS_PER_SEC;
+        RateLimiter rateLimiter = new RateLimiter.create(eventsPerSec);;
         long time = System.currentTimeMillis();
         final EventsController eCnt = new EventsController(time, eventsPerSec);
         long msElapsed = time - startTime;
@@ -168,6 +169,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         while (msElapsed < msToRun) {
             for (int i = 0; (msElapsed < msToRun) && (i < EventsPerFlush); i++) {
                 time = recordWrite(payload, stats::recordTime);
+                rateLimiter.acquire();
 //                eCnt.control(cnt++, time);
 //                msElapsed = time - startTime;
             }
