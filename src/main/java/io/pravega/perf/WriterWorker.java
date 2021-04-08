@@ -19,6 +19,7 @@ import java.nio.ByteBuffer;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import com.google.common.util.concurrent.RateLimiter;
 
 /**
  * Abstract class for Writers.
