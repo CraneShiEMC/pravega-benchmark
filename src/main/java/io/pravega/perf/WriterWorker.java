@@ -162,7 +162,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
     private void EventsWriterTimeSleep() throws InterruptedException, IOException {
         log.info("EventsWriterTimeSleep: Running");
         final long msToRun = secondsToRun * MS_PER_SEC;
-        RateLimiter rateLimiter = RateLimiter.create(eventsPerSec);;
+        RateLimiter rateLimiter = RateLimiter.create(eventsPerSec);
         long time = System.currentTimeMillis();
         final EventsController eCnt = new EventsController(time, eventsPerSec);
         long msElapsed = time - startTime;
@@ -215,7 +215,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         final ByteBuffer timeBuffer = ByteBuffer.allocate(TIME_HEADER_SIZE);
         long time = System.currentTimeMillis();
         final EventsController eCnt = new EventsController(time, eventsPerSec);
-
+        RateLimiter rateLimiter = RateLimiter.create(eventsPerSec);;
         for (int i = 0; (time - startTime) < msToRun; i++) {
             time = System.currentTimeMillis();
             byte[] bytes = timeBuffer.putLong(0, System.currentTimeMillis()).array();
@@ -229,7 +229,8 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
                    flushing moderates the kafka producer.
                 3. If the flush called after several iterations, then flush may take too much of time.
                 */
-                eCnt.control(i);
+                rateLimiter.acquire(1);
+                //eCnt.control(i);
             } catch (Exception e) {
                 log.error("write exception", e);
             }
