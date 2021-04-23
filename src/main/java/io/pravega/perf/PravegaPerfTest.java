@@ -302,8 +302,8 @@ public class PravegaPerfTest {
                 reportingInterval = DEFAULT_REPORTING_INTERVAL;
             }
 
-            enableConnectionPooling = Boolean.parseBoolean(commandline.getOptionValue("enableConnectionPooling", "false"));
-
+            //enableConnectionPooling = Boolean.parseBoolean(commandline.getOptionValue("enableConnectionPooling", "false"));
+            enableConnectionPooling = true;
             writeWatermarkPeriodMillis = Long.parseLong(commandline.getOptionValue("writeWatermarkPeriodMillis", "-1"));
             readWatermarkPeriodMillis = Long.parseLong(commandline.getOptionValue("readWatermarkPeriodMillis", "-1"));
 

@@ -50,7 +50,7 @@ public class PravegaWriterWorker extends WriterWorker {
         super(sensorId, events, EventsPerFlush,
                 secondsToRun, isRandomKey, messageSize, start,
                 stats, streamName, eventsPerSec, writeAndRead);
-
+        log.info("PravegaWriterWorker enableConnectionPooling : {}", enableConnectionPooling);
         this.producer = factory.createEventWriter(streamName,
                 new ByteArraySerializer(),
                 EventWriterConfig.builder()
