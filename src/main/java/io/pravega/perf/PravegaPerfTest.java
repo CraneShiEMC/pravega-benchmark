@@ -89,7 +89,7 @@ public class PravegaPerfTest {
         options.addOption("readcsv", true, "CSV file to record read latencies");
         options.addOption("writethroughputcsv", true, "CSV file to record write throughput");
         options.addOption("readthroughputcsv", true, "CSV file to record read throughput");
-        options.addOption("enableConnectionPooling", false, "Set to true to enable connection pooling");
+        options.addOption("enableConnectionPooling", true, "Set to true to enable connection pooling");
         options.addOption("writeWatermarkPeriodMillis", true,
                 "If -1 (default), watermarks will not be written.\n" +
                 "If 0 and not using transactions, watermarks will be written after every event.\n" +
@@ -421,6 +421,8 @@ public class PravegaPerfTest {
                 return defaultValue;
             }
         }
+
+
     }
 
     static private class PravegaTest extends Test {
