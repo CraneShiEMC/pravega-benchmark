@@ -459,6 +459,7 @@ public class PravegaPerfTest {
                     }
                 }
                 log.info("--------------- Create new stream {} ------------------", newStreamName);
+                log.info("default setting for enableConnectionPooling {}",enableConnectionPooling);
                 if (consumerCount > 0) {
                     ReaderGroup readerGroup = streamHandle.createReaderGroup(!writeAndRead, clientConfig);
                     readerGroups.add(readerGroup);
