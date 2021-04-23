@@ -54,6 +54,7 @@ public class PravegaWriterWorker extends WriterWorker {
         this.producer = factory.createEventWriter(streamName,
                 new ByteArraySerializer(),
                 EventWriterConfig.builder()
+                        .retryAttempts(5)
                         .enableConnectionPooling(true)
                         .build());
         this.writeWatermarkPeriodMillis = writeWatermarkPeriodMillis;
