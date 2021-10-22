@@ -151,7 +151,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         for (int i = 0; i < events; i++) {
             //byte[] data = createPayload();
             if(isBatch){
-                recordWrite(payload*batchSize, stats::recordTime);
+                recordWrite(createPayload(eventsPerSec*batchSize), stats::recordTime);
             }
             else{
                 recordWrite(payload, stats::recordTime);
@@ -183,7 +183,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         while ((time - startTime) < msToRun) {
             //byte[] data = createPayload();
             if(isBatch){
-                recordWrite(payload*batchSize, stats::recordTime);
+                recordWrite(createPayload(eventsPerSec*batchSize), stats::recordTime);
             }
             else{
                 recordWrite(payload, stats::recordTime);
