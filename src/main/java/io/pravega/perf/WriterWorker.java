@@ -20,6 +20,7 @@ import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
+import com.google.common.util.concurrent.RateLimiter;
 
 /**
  * Abstract class for Writers.
@@ -181,15 +182,17 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
     private void EventsWriterTimeSleep() throws InterruptedException, IOException {
         log.info("EventsWriterTimeSleep: Running");
         final long msToRun = secondsToRun * MS_PER_SEC;
+        RateLimiter rateLimiter = RateLimiter.create(eventsPerSec);
         long time = System.currentTimeMillis();
         final EventsController eCnt = new EventsController(time, eventsPerSec);
         long msElapsed = time - startTime;
-        int cnt = 0;
+        //int cnt = 0;
         while (msElapsed < msToRun) {
             for (int i = 0; (msElapsed < msToRun) && (i < EventsPerFlush); i++) {
                 //byte[] data = createPayload();
                 time = recordWrite(payload, stats::recordTime);
-                eCnt.control(cnt++, time);
+                rateLimiter.acquire(1);
+//                eCnt.control(cnt++, time);
                 msElapsed = time - startTime;
             }
             flush();
@@ -202,6 +205,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         final ByteBuffer timeBuffer = ByteBuffer.allocate(TIME_HEADER_SIZE);
         final long time = System.currentTimeMillis();
         final EventsController eCnt = new EventsController(time, eventsPerSec);
+        RateLimiter rateLimiter = RateLimiter.create(eventsPerSec);
         for (int i = 0; i < events; i++) {
             //byte[] data = createPayload();
             byte[] bytes = timeBuffer.putLong(0, System.currentTimeMillis()).array();
@@ -214,7 +218,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
                    flushing moderates the kafka producer.
                 3. If the flush called after several iterations, then flush may take too much of time.
                 */
-            eCnt.control(i);
+            rateLimiter.acquire(1);
         }
         flush();
     }

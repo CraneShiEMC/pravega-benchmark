@@ -22,6 +22,7 @@ import io.pravega.client.stream.impl.ByteArraySerializer;
 import io.pravega.client.stream.EventWriterConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.google.common.util.concurrent.RateLimiter;
 
 /**
  * Class for Pravega writer/producer.
@@ -35,6 +36,7 @@ public class PravegaWriterWorker extends WriterWorker {
     final private Boolean isEnableRoutingKey;
     final private Boolean isBatch;
     final private int batchSize;
+    private RateLimiter rateLimiter;
 
 
     // No guard is required for nextNoteTime because it is only used by one thread per instance.
@@ -67,6 +69,7 @@ public class PravegaWriterWorker extends WriterWorker {
         this.isEnableRoutingKey = isEnableRoutingKey;
         this.isBatch = isBatch;
         this.batchSize = batchSize;
+        this.rateLimiter = RateLimiter.create(eventsPerSec);
         log.info("events per producer {}, events per seconde {}", events, eventsPerSec);
     }
 
@@ -74,6 +77,7 @@ public class PravegaWriterWorker extends WriterWorker {
     public long recordWrite(byte[] data, TriConsumer record) {
         CompletableFuture<Void> ret;
         final long time = System.currentTimeMillis();
+//        rateLimiter.acquire(1);
         ret = writeEvent(producer, data);
         if(isBatch){
             ret.thenAccept(d -> {
