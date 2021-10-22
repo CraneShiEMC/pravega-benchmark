@@ -520,7 +520,7 @@ public class PravegaPerfTest {
                                                 produceStats, streamName,
                                                 eventsPerSec, writeAndRead, factory,
                                                 transactionPerCommit, enableConnectionPooling,
-                                                enableWatermark, seqNum, isEnableRoutingKey))
+                                                enableWatermark, seqNum, isEnableRoutingKey,enableBatch, batchSize))
                                 .collect(Collectors.toList());
                     } else {
                         writers = IntStream.range(0, producerCount)

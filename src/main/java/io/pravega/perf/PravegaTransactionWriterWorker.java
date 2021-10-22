@@ -49,7 +49,7 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
                                    int messageSize, long start,
                                    PerfStats stats, String streamName, int eventsPerSec, boolean writeAndRead,
                                    EventStreamClientFactory factory, int transactionsPerCommit, boolean enableConnectionPooling,
-                                   boolean enableWatermark, AtomicLong[] seqNum, Boolean isEnableRoutingKey) {
+                                   boolean enableWatermark, AtomicLong[] seqNum, Boolean isEnableRoutingKey,Boolean isBatch, int batchSize) {
         super(sensorId, events, Integer.MAX_VALUE,
                 secondsToRun, isRandomKey, messageSize, start,
                 stats, streamName, eventsPerSec, writeAndRead, seqNum, isEnableRoutingKey);
