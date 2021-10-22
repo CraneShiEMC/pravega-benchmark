@@ -38,6 +38,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
     final private boolean writeAndRead;
     final private AtomicLong[] seqNum;
     final private Boolean isEnableRoutingKey;
+    final private byte[] payload;
 
     WriterWorker(int sensorId, int events, int EventsPerFlush, int secondsToRun,
                  boolean isRandomKey, int messageSize, long start,
@@ -48,7 +49,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         this.eventsPerSec = eventsPerSec;
         this.EventsPerFlush = EventsPerFlush;
         this.writeAndRead = writeAndRead;
-//        this.payload = createPayload();
+        this.payload = createPayload(messageSize);
         this.perf = createBenchmark();
         this.seqNum = seqNum;
         this.isEnableRoutingKey = isEnableRoutingKey;
@@ -64,19 +65,13 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
     }
 
 
-    private byte[] createPayload() {
-        String event;
-        if(this.isEnableRoutingKey) {
-            int index = random.nextInt(ROUTING_KEY_NUM);
-            Long count = seqNum[index].getAndIncrement();
-            String routingKey = routingKeyArray[index];
-            event = streamName + "-" + routingKey + "-" + count + "-" + System.currentTimeMillis();
-        } else {
-            Long count = seqNum[0].getAndIncrement();
-            event = streamName + "-" + count + "-" + System.currentTimeMillis();
+    private byte[] createPayload(int size) {
+        Random random = new Random();
+        byte[] bytes = new byte[size];
+        for (int i = 0; i < size; ++i) {
+            bytes[i] = (byte) (random.nextInt(26) + 65);
         }
-
-        return event.getBytes();
+        return bytes;
     }
 
 
@@ -149,8 +144,8 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
     private void EventsWriter() throws InterruptedException, IOException {
         log.info("EventsWriter: Running");
         for (int i = 0; i < events; i++) {
-            byte[] data = createPayload();
-            recordWrite(data, stats::recordTime);
+            //byte[] data = createPayload();
+            recordWrite(payload, stats::recordTime);
         }
         flush();
     }
@@ -163,8 +158,8 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         while (cnt < events) {
             int loopMax = Math.min(EventsPerFlush, events - cnt);
             for (int i = 0; i < loopMax; i++) {
-                byte[] data = createPayload();
-                eCnt.control(cnt++, recordWrite(data, stats::recordTime));
+                //byte[] data = createPayload();
+                eCnt.control(cnt++, recordWrite(payload, stats::recordTime));
             }
             flush();
         }
@@ -176,8 +171,8 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         final long msToRun = secondsToRun * MS_PER_SEC;
         long time = System.currentTimeMillis();
         while ((time - startTime) < msToRun) {
-            byte[] data = createPayload();
-            time = recordWrite(data, stats::recordTime);
+            //byte[] data = createPayload();
+            time = recordWrite(payload, stats::recordTime);
         }
         flush();
     }
@@ -192,8 +187,8 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         int cnt = 0;
         while (msElapsed < msToRun) {
             for (int i = 0; (msElapsed < msToRun) && (i < EventsPerFlush); i++) {
-                byte[] data = createPayload();
-                time = recordWrite(data, stats::recordTime);
+                //byte[] data = createPayload();
+                time = recordWrite(payload, stats::recordTime);
                 eCnt.control(cnt++, time);
                 msElapsed = time - startTime;
             }
@@ -208,10 +203,10 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         final long time = System.currentTimeMillis();
         final EventsController eCnt = new EventsController(time, eventsPerSec);
         for (int i = 0; i < events; i++) {
-            byte[] data = createPayload();
+            //byte[] data = createPayload();
             byte[] bytes = timeBuffer.putLong(0, System.currentTimeMillis()).array();
-            System.arraycopy(bytes, 0, data, 0, bytes.length);
-            writeData(data);
+            System.arraycopy(bytes, 0, payload, 0, bytes.length);
+            writeData(payload);
                 /*
                 flush is required here for following reasons:
                 1. The writeData is called for End to End latency mode; hence make sure that data is sent.
@@ -233,11 +228,11 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         final EventsController eCnt = new EventsController(time, eventsPerSec);
 
         for (int i = 0; (time - startTime) < msToRun; i++) {
-            byte[] data = createPayload();
+            //byte[] data = createPayload();
             time = System.currentTimeMillis();
             byte[] bytes = timeBuffer.putLong(0, System.currentTimeMillis()).array();
-            System.arraycopy(bytes, 0, data, 0, bytes.length);
-            writeData(data);
+            System.arraycopy(bytes, 0, payload, 0, bytes.length);
+            writeData(payload);
                 /*
                 flush is required here for following reasons:
                 1. The writeData is called for End to End latency mode; hence make sure that data is sent.

@@ -72,14 +72,13 @@ public class PravegaWriterWorker extends WriterWorker {
 
     @Override
     public long recordWrite(byte[] data, TriConsumer record) {
-        log.info("record write. isBatch {}, batchSize {}", isBatch, batchSize);
         CompletableFuture<Void> ret;
         final long time = System.currentTimeMillis();
         ret = writeEvent(producer, data);
         if(isBatch){
             ret.thenAccept(d -> {
                 record.accept(time, System.currentTimeMillis(), data.length*batchSize);
-                log.info("Batch event write: {}, batch size: {}", new String(data), batchSize);
+                log.info("Batch event single data size: {}, batch size: {}", data.length, batchSize);
             });
         }
         else{
@@ -94,9 +93,8 @@ public class PravegaWriterWorker extends WriterWorker {
 
     @Override
     public void writeData(byte[] data) {
-        log.info("write data. isBatch {}, batchSize {}", isBatch, batchSize);
         writeEvent(producer, data).thenAccept(d -> {
-            log.info("Event write: {}", new String(data));
+            //log.info("Event write: {}", new String(data));
         });
         //producer.writeEvent(data);
         noteTimePeriodically();
