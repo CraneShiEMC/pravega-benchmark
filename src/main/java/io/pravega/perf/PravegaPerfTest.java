@@ -452,7 +452,7 @@ public class PravegaPerfTest {
 
             log.info("Test Parameters: {}", toString());
 
-            final ScheduledExecutorService bgExecutor = Executors.newScheduledThreadPool(10);
+            final ScheduledExecutorService bgExecutor = Executors.newScheduledThreadPool(30);
             ClientConfig clientConfig = ClientConfig.builder().controllerURI(new URI(controllerUri))
                     .validateHostName(validateHostName).build();
             final ControllerImpl controller = new ControllerImpl(ControllerImplConfig.builder()

@@ -58,7 +58,7 @@ public class PravegaWriterWorker extends WriterWorker {
 
         super(sensorId, events, EventsPerFlush,
                 secondsToRun, isRandomKey, messageSize, start,
-                stats, streamName, eventsPerSec, writeAndRead, seqNum, isEnableRoutingKey);
+                stats, streamName, eventsPerSec, writeAndRead, seqNum, isEnableRoutingKey, Boolean isBatch, int batchSize);
 
         this.producer = factory.createEventWriter(streamName,
                 new ByteArraySerializer(),
@@ -77,12 +77,11 @@ public class PravegaWriterWorker extends WriterWorker {
     public long recordWrite(byte[] data, TriConsumer record) {
         CompletableFuture<Void> ret;
         final long time = System.currentTimeMillis();
-//        rateLimiter.acquire(1);
         ret = writeEvent(producer, data);
         if(isBatch){
             ret.thenAccept(d -> {
                 record.accept(time, System.currentTimeMillis(), data.length*batchSize);
-                log.info("[Batch write] single event size: {}, batch size: {}", data.length, batchSize);
+                //log.info("[Batch write] single event size: {}, batch size: {}", data.length, batchSize);
             });
         }
         else{
@@ -115,7 +114,7 @@ public class PravegaWriterWorker extends WriterWorker {
                 eventList.add(data);
             }
             ret = producer.writeEvents(Integer.toString(number), eventList);
-            //log.info("write batch action, event size {}, routing key {}", eventList.size(), number);
+            log.info("write batch action, event size {}, routing key {}", eventList.size(), number);
             return ret;
         }
         else if(isEnableRoutingKey) {

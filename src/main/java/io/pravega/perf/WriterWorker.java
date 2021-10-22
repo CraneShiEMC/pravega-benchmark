@@ -40,11 +40,13 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
     final private AtomicLong[] seqNum;
     final private Boolean isEnableRoutingKey;
     final private byte[] payload;
+    final private Boolean isBatch;
+    final private int batchSize;
 
     WriterWorker(int sensorId, int events, int EventsPerFlush, int secondsToRun,
                  boolean isRandomKey, int messageSize, long start,
                  PerfStats stats, String streamName, int eventsPerSec, boolean writeAndRead, AtomicLong[] seqNum,
-                 Boolean isEnableRoutingKey) {
+                 Boolean isEnableRoutingKey,Boolean isBatch, int batchSize) {
 
         super(sensorId, events, secondsToRun, messageSize, start, stats, streamName, 0);
         this.eventsPerSec = eventsPerSec;
@@ -55,6 +57,8 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         this.seqNum = seqNum;
         this.isEnableRoutingKey = isEnableRoutingKey;
         this.routingKeyArray = getRoutingKeyArray();
+        this.batchSize = batchSize;
+        this.isBatch = isBatch;
     }
 
     private String[] getRoutingKeyArray() {
@@ -146,7 +150,12 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         log.info("EventsWriter: Running");
         for (int i = 0; i < events; i++) {
             //byte[] data = createPayload();
-            recordWrite(payload, stats::recordTime);
+            if(isBatch){
+                recordWrite(payload*batchSize, stats::recordTime);
+            }
+            else{
+                recordWrite(payload, stats::recordTime);
+            }
         }
         flush();
     }
@@ -173,7 +182,12 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         long time = System.currentTimeMillis();
         while ((time - startTime) < msToRun) {
             //byte[] data = createPayload();
-            time = recordWrite(payload, stats::recordTime);
+            if(isBatch){
+                recordWrite(payload*batchSize, stats::recordTime);
+            }
+            else{
+                recordWrite(payload, stats::recordTime);
+            }
         }
         flush();
     }
