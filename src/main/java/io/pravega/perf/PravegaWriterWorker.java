@@ -78,7 +78,7 @@ public class PravegaWriterWorker extends WriterWorker {
         if(isBatch){
             ret.thenAccept(d -> {
                 record.accept(time, System.currentTimeMillis(), data.length*batchSize);
-                log.info("Batch event single data size: {}, batch size: {}", data.length, batchSize);
+                log.info("[Batch write] single event size: {}, batch size: {}", data.length, batchSize);
             });
         }
         else{
@@ -111,7 +111,7 @@ public class PravegaWriterWorker extends WriterWorker {
                 eventList.add(data);
             }
             ret = producer.writeEvents(Integer.toString(number), eventList);
-            log.info("write batch action, event size {}, routing key {}", eventList.size(), number);
+            //log.info("write batch action, event size {}, routing key {}", eventList.size(), number);
             return ret;
         }
         else if(isEnableRoutingKey) {
