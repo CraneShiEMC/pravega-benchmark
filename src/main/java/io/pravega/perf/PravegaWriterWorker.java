@@ -114,7 +114,7 @@ public class PravegaWriterWorker extends WriterWorker {
                 eventList.add(data);
             }
             ret = producer.writeEvents(Integer.toString(number), eventList);
-            log.info("write batch action, event size {}, routing key {}", eventList.size(), number);
+            //log.info("write batch action, event size {}, routing key {}", eventList.size(), number);
             return ret;
         }
         else if(isEnableRoutingKey) {
