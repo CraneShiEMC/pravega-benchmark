@@ -109,7 +109,8 @@ public class PravegaPerfTest {
         options.addOption("validateCertHostName", true, "Whether to turn on host name verification for TLS certificates");
 
         options.addOption("help", false, "Help message");
-
+        options.addOption("enableBatch", true, "whether enable batch write");
+        options.addOption("batchSize", false, "batch write size");
         parser = new DefaultParser();
         try {
             commandline = parser.parse(options, args);
@@ -237,6 +238,8 @@ public class PravegaPerfTest {
         final boolean createScope;
         final boolean validateHostName;
         final boolean isEnableRoutingKey;
+        final boolean enableBatch;
+        final int batchSize;
 
         Test(long startTime, CommandLine commandline) throws IllegalArgumentException {
             this.startTime = startTime;
@@ -247,7 +250,8 @@ public class PravegaPerfTest {
             streamNum = parseIntOption(commandline, "streamNum", 1);
             events = parseIntOption(commandline, "events", 0);
             isEnableRoutingKey = parseBooleanOption(commandline, "enableRoutingKey", false);
-
+            enableBatch = parseBooleanOption(commandline, "enableBatch", false);
+            batchSize = parseIntOption(commandline, "batchSize", 1);
             if (commandline.hasOption("flush")) {
                 int flushEvents = Integer.parseInt(commandline.getOptionValue("flush"));
                 if (flushEvents > 0) {
@@ -525,7 +529,7 @@ public class PravegaPerfTest {
                                         EventsPerFlush, runtimeSec, false,
                                         messageSize, startTime, produceStats,
                                         streamName, eventsPerSec, writeAndRead, factory, enableConnectionPooling,
-                                        writeWatermarkPeriodMillis, seqNum, isEnableRoutingKey))
+                                        writeWatermarkPeriodMillis, seqNum, isEnableRoutingKey, enableBatch, batchSize))
                                 .collect(Collectors.toList());
                     }
                     log.info("---------- Create {} writes for stream {} ----------", writers.size(), streamName);
