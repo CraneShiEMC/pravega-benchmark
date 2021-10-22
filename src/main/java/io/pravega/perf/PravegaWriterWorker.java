@@ -110,7 +110,7 @@ public class PravegaWriterWorker extends WriterWorker {
             for (int i = 0; i < batchSize; i++) {
                 eventList.add(data);
             }
-            ret=producer.writeEvents(Integer.toString(number), eventList);
+            ret = producer.writeEvents(Integer.toString(number), eventList);
             log.info("write batch action, event size {}, routing key {}", eventList.size(), number);
             return ret;
         }
