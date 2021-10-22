@@ -52,7 +52,7 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
                                    boolean enableWatermark, AtomicLong[] seqNum, Boolean isEnableRoutingKey,Boolean isBatch, int batchSize) {
         super(sensorId, events, Integer.MAX_VALUE,
                 secondsToRun, isRandomKey, messageSize, start,
-                stats, streamName, eventsPerSec, writeAndRead, seqNum, isEnableRoutingKey);
+                stats, streamName, eventsPerSec, writeAndRead, seqNum, isEnableRoutingKey, isBatch, batchSize);
 
         final String writerId = UUID.randomUUID().toString();
         this.producer = factory.createTransactionalEventWriter(

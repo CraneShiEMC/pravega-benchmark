@@ -58,7 +58,7 @@ public class PravegaWriterWorker extends WriterWorker {
 
         super(sensorId, events, EventsPerFlush,
                 secondsToRun, isRandomKey, messageSize, start,
-                stats, streamName, eventsPerSec, writeAndRead, seqNum, isEnableRoutingKey, Boolean isBatch, int batchSize);
+                stats, streamName, eventsPerSec, writeAndRead, seqNum, isEnableRoutingKey,isBatch,batchSize);
 
         this.producer = factory.createEventWriter(streamName,
                 new ByteArraySerializer(),
