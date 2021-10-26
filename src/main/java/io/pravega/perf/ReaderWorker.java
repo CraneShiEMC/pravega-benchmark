@@ -137,7 +137,6 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 }
 //                log.info("read event {}",ret);
                 eventList.add(ret);
-                log.info("eventlist size: {}", eventList.size());
 //                if(eventList.size() >= batchSize){
 //                    Random random = new Random();
 //                    int number = random.nextInt(3);
