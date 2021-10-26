@@ -579,6 +579,7 @@ public class PravegaPerfTest {
                             .collect(Collectors.toList());
                     log.info("---------- Create {} readers for stream {} ----------", readers.size(), streamName);
                     allReaders.addAll(readers);
+                    log.info("reader number {}",allReaders.size());
                 });
 
             } else {
