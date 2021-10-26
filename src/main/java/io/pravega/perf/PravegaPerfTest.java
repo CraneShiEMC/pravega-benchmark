@@ -445,9 +445,9 @@ public class PravegaPerfTest {
                     .maxBackoffMillis(5000).build(),
                     bgExecutor);
 
-            for (int i = 0; i < streamNum; i++) {
-                String newStreamName = streamName + "-" + i;
-                String newRdGrpName = rdGrpName + "-" + i;
+
+                String newStreamName = streamName ;
+                String newRdGrpName = rdGrpName ;
                 PravegaStreamHandler streamHandle = new PravegaStreamHandler(scopeName, newStreamName, newRdGrpName, controllerUri, segmentCount,
                         segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
 
@@ -466,7 +466,7 @@ public class PravegaPerfTest {
                     log.info("-------------- Create new reader group {} -------------------", newRdGrpName);
                 }
                 streamMap.put(newStreamName, newRdGrpName);
-            }
+
 
             factory = new ClientFactoryImpl(scopeName, controller, new SocketConnectionFactoryImpl(clientConfig));
         }
