@@ -347,7 +347,7 @@ public class PravegaPerfTest {
             }
 
             if (recreate) {
-                rdGrpName = streamName + startTime;
+                rdGrpName = streamName;
             } else {
                 rdGrpName = streamName + "RdGrp";
             }
