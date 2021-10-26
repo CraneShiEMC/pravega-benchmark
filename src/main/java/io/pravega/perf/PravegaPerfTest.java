@@ -249,7 +249,7 @@ public class PravegaPerfTest {
 
         Test(long startTime, CommandLine commandline) throws IllegalArgumentException {
             this.startTime = startTime;
-
+            producerList = new ArrayList();
             controllerUri = parseStringOption(commandline, "controller", null);
             producerCount = parseIntOption(commandline, "producers", 0);
             consumerCount = parseIntOption(commandline, "consumers", 0);
@@ -488,7 +488,6 @@ public class PravegaPerfTest {
             factory = new ClientFactoryImpl(scopeName, controller, new SocketConnectionFactoryImpl(clientConfig));
             // create day stream
             log.info("-------------- starting create day stream: {} -------------------",writeStreamName);
-            producerList = new ArrayList();
             for(int i=0; i< 4; i++){
                 String newCreateStream =  writeStreamName + (i+1);
                 newRdGrpName = streamName + "RG";

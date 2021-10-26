@@ -42,6 +42,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         this.perf = createBenchmark();
         this.batchSize = batchSize;
         this.producerList = producerList;
+        log.info("producer list: {}", producerList.size());
 
     }
 
@@ -134,9 +135,9 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 if (ret != null) {
                     stats.recordTime(time, System.currentTimeMillis(), ret.length);
                 }
-                log.info("read event {}",ret);
-                //eventList.add(ret);
-                log.info("eventlist size: {}, batchSize: {}, producer list: {}", eventList.size(), batchSize, producerList.size());
+//                log.info("read event {}",ret);
+                eventList.add(ret);
+                log.info("eventlist size: {}", eventList.size());
 //                if(eventList.size() >= batchSize){
 //                    Random random = new Random();
 //                    int number = random.nextInt(3);
@@ -145,11 +146,11 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
 //                    producer.writeEvents("testing", eventList);
 //                    eventList.clear();
 //                }
-                Random random = new Random();
-                int number = random.nextInt(3);
-                EventStreamWriter<byte[]> producer = producerList.get(number);
-                producer.writeEvent(ret);
-                log.info("write events");
+//                Random random = new Random();
+//                int number = random.nextInt(3);
+//                EventStreamWriter<byte[]> producer = producerList.get(number);
+//                producer.writeEvent(ret);
+//                log.info("write events");
             }
         } finally {
             close();
