@@ -135,7 +135,7 @@ public class PravegaPerfTest {
         final ForkJoinPool executor = new ForkJoinPool();
 
         try {
-            //final List<WriterWorker> producers = perfTest.getProducers();
+            final List<WriterWorker> producers = new ArrayList();
             final List<ReaderWorker> consumers = perfTest.getConsumers();
 
             final List<Callable<Void>> workers = Stream.of(consumers, producers)

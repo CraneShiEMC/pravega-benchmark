@@ -15,6 +15,8 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An Abstract class for Readers.
