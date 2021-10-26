@@ -576,6 +576,7 @@ public class PravegaPerfTest {
             final List<ReaderWorker> allReaders;
             if (consumerCount > 0) {
                 allReaders = new ArrayList<>();
+                log.info("get consumers, streamMap size {}", streamMap.size());
                 streamMap.forEach((streamName, rdGrpName) -> {
                     final List<ReaderWorker> readers;
                     readers = IntStream.range(0, consumerCount)

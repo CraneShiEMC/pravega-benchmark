@@ -46,6 +46,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     }
 
     private Performance createBenchmark() {
+        log.info("create benchmark for reader");
         final Performance perfReader;
         if (secondsToRun > 0) {
             perfReader = writeAndRead ? this::EventsTimeReaderRW : this::EventsTimeReader;
