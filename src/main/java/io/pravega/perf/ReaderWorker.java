@@ -146,10 +146,10 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
 //                    eventList.clear();
 //                }
 //                Random random = new Random();
-//                int number = random.nextInt(3);
-//                EventStreamWriter<byte[]> producer = producerList.get(number);
-//                producer.writeEvent(ret);
-//                log.info("write events");
+                int number = random.nextInt(3);
+                EventStreamWriter<byte[]> producer = producerList.get(number);
+                producer.writeEvent(ret);
+                log.info("write events");
             }
         } finally {
             close();
