@@ -145,7 +145,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
 //                    producer.writeEvents("testing", eventList);
 //                    eventList.clear();
 //                }
-//                Random random = new Random();
+                Random random = new Random();
                 int number = random.nextInt(3);
                 EventStreamWriter<byte[]> producer = producerList.get(number);
                 producer.writeEvent(ret);
