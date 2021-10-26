@@ -568,17 +568,15 @@ public class PravegaPerfTest {
                 allReaders = new ArrayList<>();
                 log.info("get consumers, streamMap size {}", streamMap.size());
                 streamMap.forEach((streamName, rdGrpName) -> {
-                    final List<ReaderWorker> readers;
-                    readers = IntStream.range(0, consumerCount)
-                            .boxed()
-                            .map(i -> new PravegaReaderWorker(i, eventsPerConsumer,
+                    final ReaderWorker reader;
+                    reader = new PravegaReaderWorker(0, eventsPerConsumer,
                                     runtimeSec, startTime, consumeStats,
                                     rdGrpName, TIMEOUT, writeAndRead, factory,
                                     io.pravega.client.stream.Stream.of(scopeName, streamName),
-                                    readWatermarkPeriodMillis, batchSize, producerList))
-                            .collect(Collectors.toList());
-                    log.info("---------- Create {} readers for stream {} ----------", readers.size(), streamName);
-                    allReaders.addAll(readers);
+                                    readWatermarkPeriodMillis, batchSize, producerList);
+                           
+                    log.info("---------- Create  reader for stream {} ----------", streamName);
+                    allReaders.add(reader);
                     log.info("reader number {}",allReaders.size());
                 });
 
