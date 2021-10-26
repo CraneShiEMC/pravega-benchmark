@@ -498,9 +498,8 @@ public class PravegaPerfTest {
             // create day stream
             log.info("-------------- starting create day stream -------------------");
             for(int i=0; i< 30; i++){
-                String streamName = readStreamName + (i+1);
+                String streamName =  writeStreamName + (i+1);
                 producerList = new ArrayList();
-
                 newRdGrpName = streamName + "RG";
                 streamHandle = new PravegaStreamHandler(scopeName, streamName, newRdGrpName, controllerUri, segmentCount,
                         segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
