@@ -32,7 +32,7 @@ public class PravegaWriterWorker extends WriterWorker {
 
     final EventStreamWriter<byte[]> producer;
 
-a    private final long writeWatermarkPeriodMillis;
+    private final long writeWatermarkPeriodMillis;
     final private Boolean isEnableRoutingKey;
     final private Boolean isBatch;
     final private int batchSize;
