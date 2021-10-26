@@ -254,8 +254,8 @@ public class PravegaPerfTest {
             isEnableRoutingKey = parseBooleanOption(commandline, "enableRoutingKey", false);
             enableBatch = parseBooleanOption(commandline, "enableBatch", true);
             batchSize = parseIntOption(commandline, "batchSize", 100);
-            readStreamName = parseIntOption(commandline, "readStreamName", "month-stream");
-            writeStreamName = parseIntOption(commandline, "writeStreamName", "day-stream");
+            readStreamName = parseStringOption(commandline, "readStreamName", "month-stream");
+            writeStreamName = parseStringOption(commandline, "writeStreamName", "day-stream");
             if (commandline.hasOption("flush")) {
                 int flushEvents = Integer.parseInt(commandline.getOptionValue("flush"));
                 if (flushEvents > 0) {
@@ -471,7 +471,7 @@ public class PravegaPerfTest {
 //                    log.info("--------------- get streamNum ------------------");
 //                    newStreamName = streamName;
 //                }
-                String newRdGrpName = rdGrpName + "-" + i;
+                String newRdGrpName = rdGrpName;
                 PravegaStreamHandler streamHandle = new PravegaStreamHandler(scopeName, streamName, newRdGrpName, controllerUri, segmentCount,
                         segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
 
