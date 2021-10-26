@@ -12,6 +12,7 @@ package io.pravega.perf;
 
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.stream.EventStreamReader;
+import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.client.stream.ReaderConfig;
 import io.pravega.client.stream.ReinitializationRequiredException;
 import io.pravega.client.stream.Stream;
@@ -20,6 +21,7 @@ import io.pravega.client.stream.impl.ByteArraySerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -41,8 +43,8 @@ public class PravegaReaderWorker extends ReaderWorker {
     PravegaReaderWorker(int readerId, int events, int secondsToRun,
                         long start, PerfStats stats, String readergrp,
                         int timeout, boolean writeAndRead, EventStreamClientFactory factory,
-                        Stream stream, long readWatermarkPeriodMillis) {
-        super(readerId, events, secondsToRun, start, stats, readergrp, timeout, writeAndRead);
+                        Stream stream, long readWatermarkPeriodMillis, int batchSize, List<EventStreamWriter<byte[]>> producerList) {
+        super(readerId, events, secondsToRun, start, stats, readergrp, timeout, writeAndRead, batchSize, producerList);
 
         final String readerSt = Integer.toString(readerId);
         reader = factory.createReader(

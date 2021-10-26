@@ -12,11 +12,16 @@ package io.pravega.perf;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.pravega.client.stream.EventStreamWriter;
 
 /**
  * An Abstract class for Readers.
@@ -26,13 +31,17 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     final private Performance perf;
     final private boolean writeAndRead;
     private static Logger log = LoggerFactory.getLogger(ReaderWorker.class);
+    final private int batchSize;
+    final List<EventStreamWriter<byte[]>> producerList;
 
     ReaderWorker(int readerId, int events, int secondsToRun, long start,
-                 PerfStats stats, String readerGrp, int timeout, boolean writeAndRead) {
+                 PerfStats stats, String readerGrp, int timeout, boolean writeAndRead, int batchSize, List<EventStreamWriter<byte[]>> producerList) {
         super(readerId, events, secondsToRun, 0, start, stats, readerGrp, timeout);
 
         this.writeAndRead = writeAndRead;
         this.perf = createBenchmark();
+        this.batchSize = batchSize;
+        this.producerList = producerList;
 
     }
 
@@ -116,13 +125,21 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         final long msToRun = secondsToRun * MS_PER_SEC;
         byte[] ret = null;
         long time = System.currentTimeMillis();
-
+        List<byte[]> eventList = new ArrayList<>();
         try {
             while ((time - startTime) < msToRun) {
                 time = System.currentTimeMillis();
                 ret = readData();
                 if (ret != null) {
                     stats.recordTime(time, System.currentTimeMillis(), ret.length);
+                }
+                eventList.add(ret);
+                if(eventList.size()==batchSize){
+                    Random random = new Random();
+                    int number = random.nextInt(30);
+                    EventStreamWriter<byte[]> producer = producerList.get(number);
+                    producer.writeEvents("testing", eventList);
+                    eventList.clear();
                 }
             }
         } finally {
