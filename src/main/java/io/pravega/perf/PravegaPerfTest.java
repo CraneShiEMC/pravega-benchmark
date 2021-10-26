@@ -496,15 +496,15 @@ public class PravegaPerfTest {
 //            }
             factory = new ClientFactoryImpl(scopeName, controller, new SocketConnectionFactoryImpl(clientConfig));
             // create day stream
-            log.info("-------------- starting create day stream -------------------");
+            log.info("-------------- starting create day stream: {} -------------------",writeStreamName);
             for(int i=0; i< 30; i++){
-                String streamName =  writeStreamName + (i+1);
+                String newCreateStream =  writeStreamName + (i+1);
                 producerList = new ArrayList();
                 newRdGrpName = streamName + "RG";
-                streamHandle = new PravegaStreamHandler(scopeName, streamName, newRdGrpName, controllerUri, segmentCount,
+                streamHandle = new PravegaStreamHandler(scopeName, newCreateStream, newRdGrpName, controllerUri, segmentCount,
                         segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
                 if(!streamHandle.create()){
-                    EventStreamWriter<byte[]> producer = factory.createEventWriter(streamName,
+                    EventStreamWriter<byte[]> producer = factory.createEventWriter(newCreateStream,
                     new ByteArraySerializer(),
                     EventWriterConfig.builder()
                         .enableConnectionPooling(enableConnectionPooling)
@@ -514,7 +514,7 @@ public class PravegaPerfTest {
                     } else {
                         streamHandle.scale();
                     }
-                    log.info("-------------- day stream {} created-------------------",streamName);
+                    log.info("-------------- day stream {} created-------------------",newCreateStream);
                     producerList.add(producer);
                 }
             }
