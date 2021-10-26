@@ -257,7 +257,7 @@ public class PravegaPerfTest {
             events = parseIntOption(commandline, "events", 0);
             isEnableRoutingKey = parseBooleanOption(commandline, "enableRoutingKey", false);
             enableBatch = parseBooleanOption(commandline, "enableBatch", true);
-            batchSize = parseIntOption(commandline, "batchSize", 100);
+            batchSize = parseIntOption(commandline, "batchSize", 10);
             readStreamName = parseStringOption(commandline, "readStreamName", "month-stream");
             writeStreamName = parseStringOption(commandline, "writeStreamName", "day-stream");
             if (commandline.hasOption("flush")) {
@@ -504,7 +504,7 @@ public class PravegaPerfTest {
                 streamHandle = new PravegaStreamHandler(scopeName, newCreateStream, newRdGrpName, controllerUri, segmentCount,
                         segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
                 if(!streamHandle.create()){
-                    EventStreamWriter<byte[]> producer = factory.createEventWriter(newCreateStream,
+                    EventStreamWriter<byte[]> newProducer = factory.createEventWriter(newCreateStream,
                     new ByteArraySerializer(),
                     EventWriterConfig.builder()
                         .enableConnectionPooling(enableConnectionPooling)
@@ -515,7 +515,7 @@ public class PravegaPerfTest {
                         streamHandle.scale();
                     }
                     log.info("-------------- day stream {} created-------------------",newCreateStream);
-                    producerList.add(producer);
+                    producerList.add(newProducer);
                 }
             }
         }
