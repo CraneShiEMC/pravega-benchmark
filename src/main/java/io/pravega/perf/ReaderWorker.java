@@ -23,6 +23,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     final private static int MS_PER_SEC = 1000;
     final private Performance perf;
     final private boolean writeAndRead;
+    private static Logger log = LoggerFactory.getLogger(ReaderWorker.class);
 
     ReaderWorker(int readerId, int events, int secondsToRun, long start,
                  PerfStats stats, String readerGrp, int timeout, boolean writeAndRead) {
@@ -67,6 +68,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
 
 
     public void EventsReader() throws IOException {
+        log.info("EventsReader: Running");
         byte[] ret = null;
         try {
             int i = 0;
@@ -85,6 +87,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
 
 
     public void EventsReaderRW() throws IOException {
+        log.info("EventsReaderRW: Running");
         final ByteBuffer timeBuffer = ByteBuffer.allocate(TIME_HEADER_SIZE);
         byte[] ret = null;
         try {
@@ -107,6 +110,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
 
 
     public void EventsTimeReader() throws IOException {
+        log.info("EventsTimeReader: Running");
         final long msToRun = secondsToRun * MS_PER_SEC;
         byte[] ret = null;
         long time = System.currentTimeMillis();
@@ -126,6 +130,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
 
 
     public void EventsTimeReaderRW() throws IOException {
+        log.info("EventsTimeReaderRW: Running");
         final long msToRun = secondsToRun * MS_PER_SEC;
         final ByteBuffer timeBuffer = ByteBuffer.allocate(TIME_HEADER_SIZE);
         byte[] ret = null;

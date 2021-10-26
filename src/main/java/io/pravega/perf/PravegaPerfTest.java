@@ -85,6 +85,8 @@ public class PravegaPerfTest {
         options.addOption("scaleFactor", true, "If the scale policy is configured, this parameter defines the number of new segments" +
                 "to be created once Pravega determines to split a segment.");
         options.addOption("size", true, "Size of each message (event or record)");
+        options.addOption("readStreamName", true, "read stream name");
+        options.addOption("writeStreamName", true, "write stream name");
         options.addOption("recreate", true,
                 "If the stream is already existing, delete and recreate the same");
         options.addOption("throughput", true,
@@ -133,10 +135,8 @@ public class PravegaPerfTest {
         final ForkJoinPool executor = new ForkJoinPool();
 
         try {
-            final List<WriterWorker> producers = perfTest.getProducers();
+            //final List<WriterWorker> producers = perfTest.getProducers();
             final List<ReaderWorker> consumers = perfTest.getConsumers();
-//            log.info("------------- Start writer, writer number is {} ---------------", producers.size());
-//            log.info("------------- Start read, read number is {} ---------------", consumers.size());
 
             final List<Callable<Void>> workers = Stream.of(consumers, producers)
                     .filter(x -> x != null)
@@ -240,6 +240,8 @@ public class PravegaPerfTest {
         final boolean isEnableRoutingKey;
         final boolean enableBatch;
         final int batchSize;
+        final String readStreamName;
+        final String writeStreamName;
 
         Test(long startTime, CommandLine commandline) throws IllegalArgumentException {
             this.startTime = startTime;
@@ -247,11 +249,13 @@ public class PravegaPerfTest {
             controllerUri = parseStringOption(commandline, "controller", null);
             producerCount = parseIntOption(commandline, "producers", 0);
             consumerCount = parseIntOption(commandline, "consumers", 0);
-            streamNum = parseIntOption(commandline, "streamNum", 1);
+            streamNum = parseIntOption(commandline, "streamNum", 31);
             events = parseIntOption(commandline, "events", 0);
             isEnableRoutingKey = parseBooleanOption(commandline, "enableRoutingKey", false);
             enableBatch = parseBooleanOption(commandline, "enableBatch", true);
             batchSize = parseIntOption(commandline, "batchSize", 100);
+            readStreamName = parseIntOption(commandline, "readStreamName", "month-stream");
+            writeStreamName = parseIntOption(commandline, "writeStreamName", "day-stream");
             if (commandline.hasOption("flush")) {
                 int flushEvents = Integer.parseInt(commandline.getOptionValue("flush"));
                 if (flushEvents > 0) {
@@ -460,15 +464,15 @@ public class PravegaPerfTest {
                     .maxBackoffMillis(5000).build(),
                     bgExecutor);
 
-            for (int i = 0; i < streamNum; i++) {
-                String newStreamName = streamName + i;
-                log.info("--------------- streamNum = {} ------------------", streamNum);
-                if(streamNum == 1) {
-                    log.info("--------------- get streamNum ------------------");
-                    newStreamName = streamName;
-                }
+//            for (int i = 1; i < 31; i++) {
+//                String newStreamName = writeStreamName + i;
+//                log.info("--------------- streamNum = {} ------------------", streamNum);
+//                if(streamNum == 1) {
+//                    log.info("--------------- get streamNum ------------------");
+//                    newStreamName = streamName;
+//                }
                 String newRdGrpName = rdGrpName + "-" + i;
-                PravegaStreamHandler streamHandle = new PravegaStreamHandler(scopeName, newStreamName, newRdGrpName, controllerUri, segmentCount,
+                PravegaStreamHandler streamHandle = new PravegaStreamHandler(scopeName, streamName, newRdGrpName, controllerUri, segmentCount,
                         segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
 
                 if (producerCount > 0 && segmentCount > 0 && !streamHandle.create()) {
@@ -478,14 +482,14 @@ public class PravegaPerfTest {
                         streamHandle.scale();
                     }
                 }
-                log.info("--------------- Create new stream {} ------------------", newStreamName);
+//                log.info("--------------- Create new stream {} ------------------", newStreamName);
                 if (consumerCount > 0) {
                     ReaderGroup readerGroup = streamHandle.createReaderGroup(!writeAndRead, clientConfig);
                     readerGroups.add(readerGroup);
-                    log.info("-------------- Create new reader group {} -------------------", newRdGrpName);
+                    log.info("-------------- Create reader group {} -------------------", newRdGrpName);
                 }
-                streamMap.put(newStreamName, newRdGrpName);
-            }
+                streamMap.put(streamName, newRdGrpName);
+//            }
 
             factory = new ClientFactoryImpl(scopeName, controller, new SocketConnectionFactoryImpl(clientConfig));
         }
