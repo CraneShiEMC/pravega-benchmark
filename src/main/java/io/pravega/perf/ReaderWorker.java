@@ -133,11 +133,13 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 if (ret != null) {
                     stats.recordTime(time, System.currentTimeMillis(), ret.length);
                 }
+                log.info("read event {}",ret);
                 eventList.add(ret);
                 if(eventList.size()==batchSize){
                     Random random = new Random();
                     int number = random.nextInt(30);
                     EventStreamWriter<byte[]> producer = producerList.get(number);
+                    log.info("batch write events");
                     producer.writeEvents("testing", eventList);
                     eventList.clear();
                 }

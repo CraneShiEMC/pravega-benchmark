@@ -515,7 +515,7 @@ public class PravegaPerfTest {
                     } else {
                         streamHandle.scale();
                     }
-                    log.info("-------------- day stream {} creted-------------------",streamName);
+                    log.info("-------------- day stream {} created-------------------",streamName);
                     producerList.add(producer);
                 }
             }
