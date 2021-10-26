@@ -135,16 +135,21 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                     stats.recordTime(time, System.currentTimeMillis(), ret.length);
                 }
                 log.info("read event {}",ret);
-                eventList.add(ret);
+                //eventList.add(ret);
                 log.info("eventlist size: {}, batchSize: {}, producer list: {}", eventList.size(), batchSize, producerList.size());
-                if(eventList.size() >= batchSize){
-                    Random random = new Random();
-                    int number = random.nextInt(3);
-                    EventStreamWriter<byte[]> producer = producerList.get(number);
-                    log.info("batch write events");
-                    producer.writeEvents("testing", eventList);
-                    eventList.clear();
-                }
+//                if(eventList.size() >= batchSize){
+//                    Random random = new Random();
+//                    int number = random.nextInt(3);
+//                    EventStreamWriter<byte[]> producer = producerList.get(number);
+//                    log.info("batch write events");
+//                    producer.writeEvents("testing", eventList);
+//                    eventList.clear();
+//                }
+                Random random = new Random();
+                int number = random.nextInt(3);
+                EventStreamWriter<byte[]> producer = producerList.get(number);
+                producer.writeEvents(ret);
+                log.info("write events");
             }
         } finally {
             close();

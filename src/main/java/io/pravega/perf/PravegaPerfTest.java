@@ -468,13 +468,6 @@ public class PravegaPerfTest {
                     .maxBackoffMillis(5000).build(),
                     bgExecutor);
 
-//            for (int i = 1; i < 31; i++) {
-//                String newStreamName = writeStreamName + i;
-//                log.info("--------------- streamNum = {} ------------------", streamNum);
-//                if(streamNum == 1) {
-//                    log.info("--------------- get streamNum ------------------");
-//                    newStreamName = streamName;
-//                }
                 String newRdGrpName = rdGrpName;
                 PravegaStreamHandler streamHandle = new PravegaStreamHandler(scopeName, streamName, newRdGrpName, controllerUri, segmentCount,
                         segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
@@ -486,20 +479,18 @@ public class PravegaPerfTest {
                         streamHandle.scale();
                     }
                 }
-//                log.info("--------------- Create new stream {} ------------------", newStreamName);
                 if (consumerCount > 0) {
                     ReaderGroup readerGroup = streamHandle.createReaderGroup(!writeAndRead, clientConfig);
                     readerGroups.add(readerGroup);
                     log.info("-------------- Create reader group {} -------------------", newRdGrpName);
                 }
                 streamMap.put(streamName, newRdGrpName);
-//            }
             factory = new ClientFactoryImpl(scopeName, controller, new SocketConnectionFactoryImpl(clientConfig));
             // create day stream
             log.info("-------------- starting create day stream: {} -------------------",writeStreamName);
+            producerList = new ArrayList();
             for(int i=0; i< 4; i++){
                 String newCreateStream =  writeStreamName + (i+1);
-                producerList = new ArrayList();
                 newRdGrpName = streamName + "RG";
                 streamHandle = new PravegaStreamHandler(scopeName, newCreateStream, newRdGrpName, controllerUri, segmentCount,
                         segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
