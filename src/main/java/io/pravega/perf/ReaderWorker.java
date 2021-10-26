@@ -43,14 +43,13 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         this.batchSize = batchSize;
         this.producerList = producerList;
         log.info("producer list: {}", producerList.size());
-        writeEvent();
+       
     }
 
-    private void writeEvent(){
-        byte[] bytes = new byte[120];
+    private void writeEvent(byte[] data){
         log.info("try write event");
-        producerList.get(0).writeEvent(bytes).thenAccept(d->{
-            log.info("event written {}",bytes);
+        producerList.get(0).writeEvent(data).thenAccept(d->{
+            log.info("event written {}",data);
         });
     }
     private Performance createBenchmark() {
@@ -141,6 +140,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 ret = readData();
                 if (ret != null) {
                     stats.recordTime(time, System.currentTimeMillis(), ret.length);
+                    writeEvent(ret);
                 }
                 eventList.add(ret);
             }
