@@ -50,8 +50,8 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     }
 
     private void writeEvent(byte[] data){
-        int number = random.nextInt(30);
-        producerList.get(number).writeEvent(data);
+        //int number = random.nextInt(30);
+        producerList.get(0).writeEvent(data);
     }
     private Performance createBenchmark() {
         log.info("create benchmark for reader");
