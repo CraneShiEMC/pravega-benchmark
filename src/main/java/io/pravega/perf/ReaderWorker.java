@@ -146,7 +146,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                     stats.recordTime(time, System.currentTimeMillis(), ret.length);
                     // log.info("receive event {}", ret);
                     //log.info("read data time: {}", System.nanoTime());
-                    writeEvent(ret);
+                    //writeEvent(ret);
                 }
                 // eventList.add(ret);
             }
