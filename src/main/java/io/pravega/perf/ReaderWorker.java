@@ -50,7 +50,9 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     }
 
     private void writeEvent(byte[] data){
-        //int number = random.nextInt(30);
+        log.info("random start time {}", System.nanoTime());
+        int number = random.nextInt(30);
+        log.info("random finish time {}", System.nanoTime());
         producerList.get(0).writeEvent(data);
     }
     private Performance createBenchmark() {
