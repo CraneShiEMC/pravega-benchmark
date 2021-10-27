@@ -495,7 +495,7 @@ public class PravegaPerfTest {
                 newRdGrpName = streamName + "RG";
                 streamHandle = new PravegaStreamHandler(scopeName, newCreateStream, newRdGrpName, controllerUri, segmentCount,
                         segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
-                if(streamHandle.create()){
+                streamHandle.create();
                     EventStreamWriter<byte[]> newProducer = factory.createEventWriter(newCreateStream,
                     new ByteArraySerializer(),
                     EventWriterConfig.builder()
@@ -508,7 +508,7 @@ public class PravegaPerfTest {
                     // }
                     log.info("-------------- day stream {} created-------------------",newCreateStream);
                     producerList.add(newProducer);
-                }
+                
             }
         }
 

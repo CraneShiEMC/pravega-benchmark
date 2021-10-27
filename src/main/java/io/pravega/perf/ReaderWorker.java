@@ -33,6 +33,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     private static Logger log = LoggerFactory.getLogger(ReaderWorker.class);
     final private int batchSize;
     final List<EventStreamWriter<byte[]>> producerList;
+    final private Random random = new Random();
 
     ReaderWorker(int readerId, int events, int secondsToRun, long start,
                  PerfStats stats, String readerGrp, int timeout, boolean writeAndRead, int batchSize, List<EventStreamWriter<byte[]>> producerList) {
@@ -48,7 +49,6 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
 
     private void writeEvent(byte[] data){
         log.info("try write event");
-        Random random = new Random();
         int number = random.nextInt(31);
         log.info("random number {}", number);
         producerList.get(number).writeEvent(data).thenAccept(d->{

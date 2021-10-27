@@ -37,6 +37,7 @@ public class PravegaWriterWorker extends WriterWorker {
     final private Boolean isBatch;
     final private int batchSize;
     private RateLimiter rateLimiter;
+    final private Random random = new Random();
 
 
     // No guard is required for nextNoteTime because it is only used by one thread per instance.
@@ -107,7 +108,6 @@ public class PravegaWriterWorker extends WriterWorker {
     private CompletableFuture<Void> writeEvent(EventStreamWriter<byte[]> producer, byte[] data) {
         CompletableFuture<Void> ret;
         if(isBatch){
-            Random random = new Random();
             int number = random.nextInt(128);
             List<byte[]> eventList = new ArrayList<>();
             for (int i = 0; i < batchSize; i++) {
