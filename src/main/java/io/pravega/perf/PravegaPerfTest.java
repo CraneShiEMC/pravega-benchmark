@@ -461,7 +461,7 @@ public class PravegaPerfTest {
 
             log.info("Test Parameters: {}", toString());
 
-            final ScheduledExecutorService bgExecutor = Executors.newScheduledThreadPool(30);
+            final ScheduledExecutorService bgExecutor = Executors.newScheduledThreadPool(10);
             ClientConfig clientConfig = ClientConfig.builder().controllerURI(new URI(controllerUri))
                     .validateHostName(validateHostName).build();
             final ControllerImpl controller = new ControllerImpl(ControllerImplConfig.builder()
@@ -481,6 +481,7 @@ public class PravegaPerfTest {
                     }
                 }
                 if (consumerCount > 0) {
+                    log.info("-------------- Starting creating reader group {} -------------------", newRdGrpName);
                     ReaderGroup readerGroup = streamHandle.createReaderGroup(true, clientConfig);
                     readerGroups.add(readerGroup);
                     log.info("-------------- Create reader group {} -------------------", newRdGrpName);
