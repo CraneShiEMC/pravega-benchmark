@@ -49,7 +49,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     private void writeEvent(byte[] data){
         log.info("try write event");
         Random random = new Random();
-        int number = random.nextInt(4);
+        int number = random.nextInt(31);
         log.info("random number {}", number);
         producerList.get(number).writeEvent(data).thenAccept(d->{
             log.info("event written {}",data);
