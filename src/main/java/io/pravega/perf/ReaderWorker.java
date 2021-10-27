@@ -34,6 +34,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     final private int batchSize;
     final List<EventStreamWriter<byte[]>> producerList;
     final private Random random = new Random();
+    private PerfStats produceWriterStats;
 
     ReaderWorker(int readerId, int events, int secondsToRun, long start,
                  PerfStats stats, String readerGrp, int timeout, boolean writeAndRead, int batchSize, List<EventStreamWriter<byte[]>> producerList) {
@@ -44,13 +45,14 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         this.batchSize = batchSize;
         this.producerList = producerList;
         log.info("producer list: {}", producerList.size());
+        produceWriterStats = new PerfStats("Writing", 5000, 120, null, null);
        
     }
 
     private void writeEvent(byte[] data){
-        log.info("try write event");
+        // log.info("try write event");
         int number = random.nextInt(30);
-        log.info("random number {}", number);
+        // log.info("random number {}", number);
         producerList.get(number).writeEvent(data).thenAccept(d->{
             log.info("event written {}",data);
         });
@@ -143,10 +145,10 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 ret = readData();
                 if (ret != null) {
                     stats.recordTime(time, System.currentTimeMillis(), ret.length);
-                    log.info("receive event {}", ret);
+                    // log.info("receive event {}", ret);
                     writeEvent(ret);
                 }
-                eventList.add(ret);
+                // eventList.add(ret);
             }
         } finally {
             close();
