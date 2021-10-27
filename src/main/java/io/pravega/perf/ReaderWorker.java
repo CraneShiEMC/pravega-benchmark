@@ -18,6 +18,9 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +38,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     final List<EventStreamWriter<byte[]>> producerList;
     final private Random random = new Random();
     private PerfStats produceWriterStats;
+    private AtomicInteger count = new AtomicInteger(0);
 
     ReaderWorker(int readerId, int events, int secondsToRun, long start,
                  PerfStats stats, String readerGrp, int timeout, boolean writeAndRead, int batchSize, List<EventStreamWriter<byte[]>> producerList) {
@@ -50,10 +54,9 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     }
 
     private void writeEvent(byte[] data){
-        log.info("random start time {}", System.nanoTime());
-        int number = random.nextInt(30);
-        log.info("random finish time {}", System.nanoTime());
-        producerList.get(0).writeEvent(data);
+        log.info("writeEvent start time {}",System.nanoTime());
+        producerList.get(count.incrementAndGet() % 30).writeEvent(data);
+        log.info("writeEvent end time {}",System.nanoTime());
     }
     private Performance createBenchmark() {
         log.info("create benchmark for reader");
