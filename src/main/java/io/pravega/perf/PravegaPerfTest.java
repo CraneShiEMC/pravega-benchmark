@@ -493,20 +493,20 @@ public class PravegaPerfTest {
                 newRdGrpName = streamName + "RG";
                 streamHandle = new PravegaStreamHandler(scopeName, newCreateStream, newRdGrpName, controllerUri, segmentCount,
                         segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
-                if(!streamHandle.create()){
+                // if(streamHandle.create()){
                     EventStreamWriter<byte[]> newProducer = factory.createEventWriter(newCreateStream,
                     new ByteArraySerializer(),
                     EventWriterConfig.builder()
                         .enableConnectionPooling(enableConnectionPooling)
                         .build());
-                    if (recreate) {
-                        streamHandle.recreate();
-                    } else {
-                        streamHandle.scale();
-                    }
+                    // if (recreate) {
+                    //     streamHandle.recreate();
+                    // } else {
+                    //     streamHandle.scale();
+                    // }
                     log.info("-------------- day stream {} created-------------------",newCreateStream);
                     producerList.add(newProducer);
-                }
+                // }
             }
         }
 
