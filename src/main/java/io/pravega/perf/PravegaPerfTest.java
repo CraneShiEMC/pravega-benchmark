@@ -494,6 +494,7 @@ public class PravegaPerfTest {
                 streamHandle = new PravegaStreamHandler(scopeName, newCreateStream, newRdGrpName, controllerUri, segmentCount,
                         segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
                 // if(streamHandle.create()){
+                    streamHandle.create();
                     EventStreamWriter<byte[]> newProducer = factory.createEventWriter(newCreateStream,
                     new ByteArraySerializer(),
                     EventWriterConfig.builder()
