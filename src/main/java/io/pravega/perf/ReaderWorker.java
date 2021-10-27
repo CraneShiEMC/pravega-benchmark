@@ -54,7 +54,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         int number = random.nextInt(30);
         // log.info("random number {}", number);
         producerList.get(number).writeEvent(data).thenAccept(d->{
-            log.info("event written {}",data);
+            //log.info("event written {}",data);
         });
     }
     private Performance createBenchmark() {
@@ -138,7 +138,6 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         final long msToRun = secondsToRun * MS_PER_SEC;
         byte[] ret = null;
         long time = System.currentTimeMillis();
-        List<byte[]> eventList = new ArrayList<>();
         try {
             while ((time - startTime) < msToRun) {
                 time = System.currentTimeMillis();
@@ -146,6 +145,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 if (ret != null) {
                     stats.recordTime(time, System.currentTimeMillis(), ret.length);
                     // log.info("receive event {}", ret);
+                    //log.info("read data time: {}", System.nanoTime());
                     writeEvent(ret);
                 }
                 // eventList.add(ret);
