@@ -110,7 +110,7 @@ public class PravegaPerfTest {
 
         options.addOption("help", false, "Help message");
         options.addOption("enableBatch", true, "whether enable batch write");
-        options.addOption("batchSize", false, "batch write size");
+        options.addOption("batchSize", true, "batch write size");
         parser = new DefaultParser();
         try {
             commandline = parser.parse(options, args);
