@@ -67,13 +67,13 @@ public class PravegaWriterWorker extends WriterWorker {
     public long recordWrite(byte[] data, TriConsumer record) {
         CompletableFuture ret;
         final long time = System.currentTimeMillis();
-        log.info("Before write event {} stream info, head info: {}, tail info{}", data, streamHandle.getCurrentStreamInfo().getHeadStreamCut(), streamHandle.getCurrentStreamInfo().getTailStreamCut());
+        log.info("Before write event stream info, head info: {}, tail info{}", streamHandle.getCurrentStreamInfo().getHeadStreamCut(), streamHandle.getCurrentStreamInfo().getTailStreamCut());
         ret = producer.writeEvent(data);
 
         ret.thenAccept(d -> {
             record.accept(time, System.currentTimeMillis(), data.length);
             log.info("event is written: {}", data.toString());
-            log.info("After write event {} stream info, head info: {}, tail info{}", data ,streamHandle.getCurrentStreamInfo().getHeadStreamCut(), streamHandle.getCurrentStreamInfo().getTailStreamCut());
+            log.info("After write event stream info, head info: {}, tail info{}",streamHandle.getCurrentStreamInfo().getHeadStreamCut(), streamHandle.getCurrentStreamInfo().getTailStreamCut());
         });
         noteTimePeriodically();
         return time;

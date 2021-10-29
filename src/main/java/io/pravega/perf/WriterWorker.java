@@ -155,6 +155,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         long time = System.currentTimeMillis();
         while ((time - startTime) < msToRun) {
             count++;
+            log.info("count {}",count);
             time = recordWrite(String.valueOf(count).getBytes(), stats::recordTime);
         }
         flush();
