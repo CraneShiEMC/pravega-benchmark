@@ -417,7 +417,7 @@ public class PravegaPerfTest {
 
         private int parseIntOption(CommandLine commandline, String option, int defaultValue) {
             if (commandline.hasOption(option)) {
-                log.info("options value",commandline.getOptionValue(option));
+                log.info("options {} value {}",option,commandline.getOptionValue(option));
                 return Integer.parseInt(commandline.getOptionValue(option));
             } else {
                 return defaultValue;
