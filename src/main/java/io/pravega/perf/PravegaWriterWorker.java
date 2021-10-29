@@ -75,7 +75,7 @@ public class PravegaWriterWorker extends WriterWorker {
         lastStreamCut = streamHandle.getCurrentStreamInfo().getTailStreamCut();
         ret.thenAccept(d -> {
             record.accept(time, System.currentTimeMillis(), data.length);
-            //log.info("event is written: {}", data.toString());
+            log.info("event is written: {}", data.toString());
             if(!lastStreamCut.toString().equals(streamHandle.getCurrentStreamInfo().getTailStreamCut().toString())){
                 log.info("tail stream cut changed, current time:{}",System.currentTimeMillis());
             }
