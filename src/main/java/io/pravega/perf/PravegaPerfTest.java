@@ -251,7 +251,7 @@ public class PravegaPerfTest {
             events = parseIntOption(commandline, "events", 0);
             isEnableRoutingKey = parseBooleanOption(commandline, "enableRoutingKey", false);
             enableBatch = parseBooleanOption(commandline, "enableBatch", true);
-            batchSize = parseIntOption(commandline, "batchSize", 100);
+            batchSize = parseIntOption(commandline, "batchSize", 1000);
             if (commandline.hasOption("flush")) {
                 int flushEvents = Integer.parseInt(commandline.getOptionValue("flush"));
                 if (flushEvents > 0) {
