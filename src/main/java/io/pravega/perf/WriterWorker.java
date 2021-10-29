@@ -150,10 +150,12 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
 
     private void EventsWriterTime() throws InterruptedException, IOException {
         log.info("EventsWriterTime: Running");
+        int count = 0;
         final long msToRun = secondsToRun * MS_PER_SEC;
         long time = System.currentTimeMillis();
         while ((time - startTime) < msToRun) {
-            time = recordWrite(payload, stats::recordTime);
+            count++;
+            time = recordWrite(String.valueOf(count).getBytes(), stats::recordTime);
         }
         flush();
     }
