@@ -36,6 +36,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     private static Logger log = LoggerFactory.getLogger(ReaderWorker.class);
     final private int batchSize;
     final List<EventStreamWriter<byte[]>> producerList;
+    final private EventStreamWriter<byte[]> producer;
     final private Random random = new Random();
     private PerfStats produceWriterStats;
     private AtomicInteger count = new AtomicInteger(0);
@@ -49,14 +50,17 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         this.batchSize = batchSize;
         this.producerList = producerList;
         log.info("producer list: {}", producerList.size());
+        producer = producerList.get(0);
         produceWriterStats = new PerfStats("Writing", 5000, 120, null, null);
        
     }
 
     private void writeEvent(byte[] data){
-        log.info("writeEvent start time {}",System.nanoTime());
+        //log.info("writeEvent start time {}",System.nanoTime());
         producerList.get(count.incrementAndGet() % 30).writeEvent(data);
-        log.info("writeEvent end time {}",System.nanoTime());
+//        producer.writeEvent(data);
+        //log.info("writeEvent end time {}",System.nanoTime());
+        // execute time: 18,614 us
     }
     private Performance createBenchmark() {
         log.info("create benchmark for reader");
