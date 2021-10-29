@@ -30,7 +30,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
     final private static int MS_PER_SEC = 1000;
     final private Performance perf;
     final private byte[] payload;
-    final private int eventsPerSec;
+    private int eventsPerSec;
     final private int EventsPerFlush;
     final private boolean writeAndRead;
 
@@ -164,6 +164,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
 
     private void EventsWriterTimeSleep() throws InterruptedException, IOException {
         log.info("EventsWriterTimeSleep: Running");
+        eventsPerSec = 1;
         log.info("Event per second {}", eventsPerSec);
         int count = 0;
         final long msToRun = secondsToRun * MS_PER_SEC;
