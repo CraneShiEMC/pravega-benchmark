@@ -69,7 +69,7 @@ public class PravegaWriterWorker extends WriterWorker {
         this.isEnableRoutingKey = isEnableRoutingKey;
         this.isBatch = isBatch;
         this.batchSize = batchSize;
-        this.rateLimiter = RateLimiter.create(eventsPerSec);
+        //this.rateLimiter = RateLimiter.create(eventsPerSec);
         log.info("events per producer {}, events per seconde {}", events, eventsPerSec);
     }
 
