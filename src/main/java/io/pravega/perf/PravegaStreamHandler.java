@@ -25,6 +25,7 @@ import java.util.concurrent.TimeoutException;
 import io.pravega.client.control.impl.ControllerImpl;
 import io.pravega.client.admin.StreamManager;
 import io.pravega.client.stream.StreamConfiguration;
+import io.pravega.client.stream.StreamCut;
 import io.pravega.client.stream.ReaderGroupConfig;
 import io.pravega.client.admin.ReaderGroupManager;
 import io.pravega.client.stream.ReaderGroup;
@@ -150,11 +151,11 @@ public class PravegaStreamHandler {
         }
     }
 
-    ReaderGroup createReaderGroup(boolean reset, ClientConfig clientConfig) throws URISyntaxException {
+    ReaderGroup createReaderGroup(boolean reset, ClientConfig clientConfig, StreamCut streamcut) throws URISyntaxException {
         if (readerGroupManager == null) {
             readerGroupManager = ReaderGroupManager.withScope(scope, clientConfig);
             rdGrpConfig = ReaderGroupConfig.builder()
-                    .stream(Stream.of(scope, stream)).build();
+                    .stream(Stream.of(scope, stream),StreamCut.UNBOUNDED, streamcut).build();
         }
         readerGroupManager.createReaderGroup(rdGrpName, rdGrpConfig);
         final ReaderGroup rdGroup = readerGroupManager.getReaderGroup(rdGrpName);

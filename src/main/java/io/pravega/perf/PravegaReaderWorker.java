@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.StreamHandler;
 
 /**
  * Class for Pravega reader/consumer.
@@ -34,6 +35,7 @@ public class PravegaReaderWorker extends ReaderWorker {
     private final Stream stream;
     private final ScheduledExecutorService watermarkExecutor = Executors.newScheduledThreadPool(1);
 
+
     /**
      *
      * @param readWatermarkPeriodMillis If >0, watermarks will be read with a period of this many milliseconds.
@@ -41,8 +43,8 @@ public class PravegaReaderWorker extends ReaderWorker {
     PravegaReaderWorker(int readerId, int events, int secondsToRun,
                         long start, PerfStats stats, String readergrp,
                         int timeout, boolean writeAndRead, EventStreamClientFactory factory,
-                        Stream stream, long readWatermarkPeriodMillis, int readDelay) {
-        super(readerId, events, secondsToRun, start, stats, readergrp, timeout, writeAndRead, readDelay);
+                        Stream stream, long readWatermarkPeriodMillis, int readDelay, PravegaStreamHandler streamHandle) {
+        super(readerId, events, secondsToRun, start, stats, readergrp, timeout, writeAndRead, readDelay,streamHandle);
 
         final String readerSt = Integer.toString(readerId);
         reader = factory.createReader(

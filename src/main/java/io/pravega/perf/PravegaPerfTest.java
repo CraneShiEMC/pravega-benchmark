@@ -461,7 +461,8 @@ public class PravegaPerfTest {
                 log.info("--------------- Create new stream {} ------------------", newStreamName);
                 log.info("default setting for enableConnectionPooling {}",enableConnectionPooling);
                 if (consumerCount > 0) {
-                    ReaderGroup readerGroup = streamHandle.createReaderGroup(!writeAndRead, clientConfig);
+                    log.info("create reader group with tail stream cut time {}", System.currentTimeMillis());
+                    ReaderGroup readerGroup = streamHandle.createReaderGroup(!writeAndRead, clientConfig,streamHandle.getCurrentStreamInfo().getTailStreamCut());
                     readerGroups.add(readerGroup);
                     log.info("-------------- Create new reader group {} -------------------", newRdGrpName);
                 }
@@ -524,7 +525,7 @@ public class PravegaPerfTest {
                                     runtimeSec, startTime, consumeStats,
                                     rdGrpName, TIMEOUT, writeAndRead, factory,
                                     io.pravega.client.stream.Stream.of(scopeName, streamName),
-                                    readWatermarkPeriodMillis, readDelay))
+                                    readWatermarkPeriodMillis, readDelay, streamHandle))
                             .collect(Collectors.toList());
                     log.info("---------- Create {} readers for stream {} ----------", readers.size(), streamName);
                     allReaders.addAll(readers);

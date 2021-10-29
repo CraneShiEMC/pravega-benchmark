@@ -28,14 +28,16 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     final private Performance perf;
     final private boolean writeAndRead;
     final private int readDelay;
+    final private PravegaStreamHandler streamHandler;
 
     ReaderWorker(int readerId, int events, int secondsToRun, long start,
-                 PerfStats stats, String readerGrp, int timeout, boolean writeAndRead, int readDelay) {
+                 PerfStats stats, String readerGrp, int timeout, boolean writeAndRead, int readDelay, PravegaStreamHandler streamHandle) {
         super(readerId, events, secondsToRun, 0, start, stats, readerGrp, timeout);
 
         this.writeAndRead = writeAndRead;
         this.readDelay = readDelay;
         this.perf = createBenchmark();
+        this.streamHandler = streamHandle;
 
     }
 
@@ -128,6 +130,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 time = System.currentTimeMillis();
                 ret = readData();
                 if (ret != null) {
+                    log.info("received event {}", ret.toString());
                     stats.recordTime(time, System.currentTimeMillis(), ret.length);
                 }
             }
