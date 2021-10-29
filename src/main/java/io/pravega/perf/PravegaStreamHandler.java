@@ -33,6 +33,7 @@ import io.pravega.client.stream.RetentionPolicy;
 import io.pravega.client.stream.impl.StreamSegments;
 import io.pravega.client.segment.impl.Segment;
 import io.pravega.client.stream.impl.StreamImpl;
+import io.pravega.client.admin.StreamInfo;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.stream.Stream;
 import org.slf4j.Logger;
@@ -169,6 +170,10 @@ public class PravegaStreamHandler {
         } catch (RuntimeException e) {
             log.info("Cannot delete reader group {} because it is already deleted", rdGrpName);
         }
+    }
+
+    public StreamInfo getCurrentStreamInfo(){
+        return streamManager.getStreamInfo(this.scope, this.stream);
     }
 
     private StreamConfiguration getStreamConfig() {

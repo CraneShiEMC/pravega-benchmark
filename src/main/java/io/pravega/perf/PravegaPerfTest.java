@@ -499,7 +499,7 @@ public class PravegaPerfTest {
                                         EventsPerFlush, runtimeSec, false,
                                         messageSize, startTime, produceStats,
                                         streamName, eventsPerSec, writeAndRead, factory, enableConnectionPooling,
-                                        writeWatermarkPeriodMillis))
+                                        writeWatermarkPeriodMillis, streamHandle))
                                 .collect(Collectors.toList());
                     }
                     log.info("---------- Create {} writes for stream {} ----------", writers.size(), streamName);

@@ -33,6 +33,7 @@ public class PravegaWriterWorker extends WriterWorker {
     // No guard is required for nextNoteTime because it is only used by one thread per instance.
     private long nextNoteTime = System.currentTimeMillis();
     private RateLimiter rateLimiter;
+    private PravegaStreamHandler streamHandle;
 
     /**
      * Construct a PravegaWriterWorker.
@@ -45,7 +46,7 @@ public class PravegaWriterWorker extends WriterWorker {
                         boolean isRandomKey, int messageSize, long start,
                         PerfStats stats, String streamName, int eventsPerSec,
                         boolean writeAndRead, EventStreamClientFactory factory,
-                        boolean enableConnectionPooling, long writeWatermarkPeriodMillis) {
+                        boolean enableConnectionPooling, long writeWatermarkPeriodMillis,PravegaStreamHandler streamHandle) {
 
         super(sensorId, events, EventsPerFlush,
                 secondsToRun, isRandomKey, messageSize, start,
@@ -59,15 +60,19 @@ public class PravegaWriterWorker extends WriterWorker {
                         .build());
         this.writeWatermarkPeriodMillis = writeWatermarkPeriodMillis;
         this.rateLimiter = RateLimiter.create(eventsPerSec);
+        this.streamHandle = streamHandle;
     }
 
     @Override
     public long recordWrite(byte[] data, TriConsumer record) {
         CompletableFuture ret;
         final long time = System.currentTimeMillis();
+        log.info("Before write event {} stream info, head info: {}, tail info{}", data, streamHandle.getCurrentStreamInfo().getHeadStreamCut(), streamHandle.getCurrentStreamInfo().getTailStreamCut());
         ret = producer.writeEvent(data);
+
         ret.thenAccept(d -> {
             record.accept(time, System.currentTimeMillis(), data.length);
+            log.info("After write event {} stream info, head info: {}, tail info{}", data ,streamHandle.getCurrentStreamInfo().getHeadStreamCut(), streamHandle.getCurrentStreamInfo().getTailStreamCut());
         });
         noteTimePeriodically();
         return time;
