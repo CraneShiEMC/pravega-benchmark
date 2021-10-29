@@ -16,6 +16,8 @@ import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.client.stream.impl.ByteArraySerializer;
 import io.pravega.client.stream.EventWriterConfig;
+import io.pravega.client.stream.StreamCut;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.google.common.util.concurrent.RateLimiter;
@@ -34,6 +36,7 @@ public class PravegaWriterWorker extends WriterWorker {
     private long nextNoteTime = System.currentTimeMillis();
     private RateLimiter rateLimiter;
     private PravegaStreamHandler streamHandle;
+    private StreamCut lastStreamCut;
 
     /**
      * Construct a PravegaWriterWorker.
@@ -67,13 +70,15 @@ public class PravegaWriterWorker extends WriterWorker {
     public long recordWrite(byte[] data, TriConsumer record) {
         CompletableFuture ret;
         final long time = System.currentTimeMillis();
-        log.info("Before write event stream info, tail info{}",  streamHandle.getCurrentStreamInfo().getTailStreamCut());
+        
         ret = producer.writeEvent(data);
-
+        lastStreamCut = streamHandle.getCurrentStreamInfo().getTailStreamCut();
         ret.thenAccept(d -> {
             record.accept(time, System.currentTimeMillis(), data.length);
-            log.info("event is written: {}", data.toString());
-            log.info("After write event stream info, tail info{}", streamHandle.getCurrentStreamInfo().getTailStreamCut());
+            //log.info("event is written: {}", data.toString());
+            if(!lastStreamCut.toString().equals(streamHandle.getCurrentStreamInfo().getTailStreamCut().toString())){
+                log.info("tail stream cut changed, current time:{}",System.currentTimeMillis());
+            }
         });
         noteTimePeriodically();
         return time;
