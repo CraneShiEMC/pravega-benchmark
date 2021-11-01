@@ -159,6 +159,7 @@ public class PravegaStreamHandler {
         }
         String readerGroupName=rdGrpName+rgPrefix;
         readerGroupManager.createReaderGroup(readerGroupName, rdGrpConfig);
+        log.info("-------------- Create new reader group {} with streamcut {} -------------------", readerGroupName,streamcut);
         final ReaderGroup rdGroup = readerGroupManager.getReaderGroup(readerGroupName);
         if (reset) {
             rdGroup.resetReaderGroup(rdGrpConfig);
