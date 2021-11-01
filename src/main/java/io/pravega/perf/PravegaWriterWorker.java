@@ -82,6 +82,7 @@ public class PravegaWriterWorker extends WriterWorker {
             //     log.info("tail stream cut changed");
             // }
             // lastStreamCut = streamHandle.getCurrentStreamInfo().getTailStreamCut();
+            log.info("current tailstreamcut {}",streamHandle.getCurrentStreamInfo().getTailStreamCut());
         });
         noteTimePeriodically();
         return time;

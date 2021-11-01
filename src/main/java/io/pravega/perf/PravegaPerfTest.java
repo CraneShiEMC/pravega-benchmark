@@ -462,7 +462,6 @@ public class PravegaPerfTest {
                 log.info("--------------- Create new stream {} ------------------", newStreamName);
                 log.info("default setting for enableConnectionPooling {}",enableConnectionPooling);
                 if (consumerCount > 0) {
-                    log.info("create reader group with tail stream cut time {}", System.currentTimeMillis());
                     StreamCut streamCut=streamHandle.getCurrentStreamInfo().getTailStreamCut();
                     ReaderGroup readerGroup = streamHandle.createReaderGroup(!writeAndRead, clientConfig,streamCut);
                     readerGroups.add(readerGroup);
