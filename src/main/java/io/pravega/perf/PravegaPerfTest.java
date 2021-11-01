@@ -17,6 +17,7 @@ import io.pravega.client.connection.impl.SocketConnectionFactoryImpl;
 import io.pravega.client.control.impl.ControllerImpl;
 import io.pravega.client.control.impl.ControllerImplConfig;
 import io.pravega.client.stream.ReaderGroup;
+import io.pravega.client.stream.StreamCut;
 import io.pravega.client.stream.impl.ClientFactoryImpl;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -462,9 +463,10 @@ public class PravegaPerfTest {
                 log.info("default setting for enableConnectionPooling {}",enableConnectionPooling);
                 if (consumerCount > 0) {
                     log.info("create reader group with tail stream cut time {}", System.currentTimeMillis());
-                    ReaderGroup readerGroup = streamHandle.createReaderGroup(!writeAndRead, clientConfig,streamHandle.getCurrentStreamInfo().getTailStreamCut());
+                    StreamCut streamCut=streamHandle.getCurrentStreamInfo().getTailStreamCut();
+                    ReaderGroup readerGroup = streamHandle.createReaderGroup(!writeAndRead, clientConfig,streamCut);
                     readerGroups.add(readerGroup);
-                    log.info("-------------- Create new reader group {} -------------------", newRdGrpName);
+                    log.info("-------------- Create new reader group {} with streamcut {} at {} -------------------", newRdGrpName,streamCut, System.currentTimeMillis());
                 }
                 streamMap.put(newStreamName, newRdGrpName);
 
