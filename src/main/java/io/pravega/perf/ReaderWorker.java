@@ -81,6 +81,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
 
 
     public void EventsReader() throws IOException {
+        log.info("EventsReader");
         byte[] ret = null;
         try {
             int i = 0;
@@ -99,6 +100,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
 
 
     public void EventsReaderRW() throws IOException {
+        log.info("EventsReaderRW");
         final ByteBuffer timeBuffer = ByteBuffer.allocate(TIME_HEADER_SIZE);
         byte[] ret = null;
         try {
@@ -121,6 +123,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
 
 
     public void EventsTimeReader() throws IOException {
+        log.info("EventsTimeReader");
         final long msToRun = secondsToRun * MS_PER_SEC;
         byte[] ret = null;
         long time = System.currentTimeMillis();
@@ -141,6 +144,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
 
 
     public void EventsTimeReaderRW() throws IOException {
+        log.info("EventsTimeReaderRW");
         final long msToRun = secondsToRun * MS_PER_SEC;
         final ByteBuffer timeBuffer = ByteBuffer.allocate(TIME_HEADER_SIZE);
         byte[] ret = null;
