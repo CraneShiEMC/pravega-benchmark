@@ -157,13 +157,20 @@ public class PravegaStreamHandler {
             rdGrpConfig = ReaderGroupConfig.builder()
                     .stream(Stream.of(scope, stream),StreamCut.UNBOUNDED, streamcut).build();
         }
-        log.info("create reader group {}",readerGroupName);
-        readerGroupManager.createReaderGroup(readerGroupName, rdGrpConfig);
-        final ReaderGroup rdGroup = readerGroupManager.getReaderGroup(readerGroupName);
-        if (reset) {
-            rdGroup.resetReaderGroup(rdGrpConfig);
+        if(readerGroupManager.getReaderGroup(readerGroupName)!=null){
+            log.info("reader group exist {}",readerGroupName);
+            return readerGroupManager.getReaderGroup(readerGroupName);
+            
+        }else{
+            readerGroupManager.createReaderGroup(readerGroupName, rdGrpConfig);
+            log.info("create reader group {}",readerGroupName);
+            final ReaderGroup rdGroup = readerGroupManager.getReaderGroup(readerGroupName);
+            if (reset) {
+                rdGroup.resetReaderGroup(rdGrpConfig);
+            }
+            return rdGroup;
         }
-        return rdGroup;
+        
     }
 
     void deleteReaderGroup() {
