@@ -60,7 +60,8 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     private void writeEvent(byte[] data){
         //log.info("writeEvent start time {}",System.nanoTime());
         //producerList.get(count.incrementAndGet() % 30).writeEvent(data);
-        producer.writeEvent(data);
+       // producer.writeEvent(data);
+       producerList.get(count.incrementAndGet() % 30).writeEvents("testing", dataList);
         //log.info("writeEvent end time {}",System.nanoTime());
         // execute time: 18,614 us
     }
