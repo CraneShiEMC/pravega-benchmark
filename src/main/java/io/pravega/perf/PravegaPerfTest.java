@@ -471,7 +471,7 @@ public class PravegaPerfTest {
                 if (consumerCount > 0) {
                     StreamCut streamCut=streamHandle.getCurrentStreamInfo().getTailStreamCut();
                     ReaderGroup readerGroup = streamHandle.createReaderGroup(!writeAndRead, clientConfig,streamCut,"rg1");
-                    Thread.sleep(5000);
+                    Thread.sleep(10000);
                     StreamCut streamCut2=streamHandle.getCurrentStreamInfo().getTailStreamCut();
                     ReaderGroup readerGroup2 = streamHandle.createReaderGroup(!writeAndRead, clientConfig,streamCut2,"rg2");
                     readerGroup.getEndOfDataNotifier(notifier).registerListener(this);
