@@ -72,20 +72,28 @@ public class PravegaWriterWorker extends WriterWorker {
         final long time = System.currentTimeMillis();
         
         ret = producer.writeEvent(Long.toString(time).getBytes());
-        ret.thenAccept(d -> {
-            record.accept(time, System.currentTimeMillis(), data.length);
-            log.info("event is written: {}", Long.toString(time));
-            // if(lastStreamCut==null){
-            //     lastStreamCut = streamHandle.getCurrentStreamInfo().getTailStreamCut();
-            // }
-            // if(!lastStreamCut.toString().equals(streamHandle.getCurrentStreamInfo().getTailStreamCut().toString())){
-            //     log.info("tail stream cut changed");
-            // }
-            // lastStreamCut = streamHandle.getCurrentStreamInfo().getTailStreamCut();
-            log.info("current tailstreamcut {}",streamHandle.getCurrentStreamInfo().getTailStreamCut());
-        });
-        noteTimePeriodically();
-        return time;
+        
+        try{
+            ret.get();
+            ret.thenAccept(d -> {
+                record.accept(time, System.currentTimeMillis(), data.length);
+                log.info("event is written: {}", Long.toString(time));
+                // if(lastStreamCut==null){
+                //     lastStreamCut = streamHandle.getCurrentStreamInfo().getTailStreamCut();
+                // }
+                // if(!lastStreamCut.toString().equals(streamHandle.getCurrentStreamInfo().getTailStreamCut().toString())){
+                //     log.info("tail stream cut changed");
+                // }
+                // lastStreamCut = streamHandle.getCurrentStreamInfo().getTailStreamCut();
+                log.info("current tailstreamcut {}",streamHandle.getCurrentStreamInfo().getTailStreamCut());
+            });
+            noteTimePeriodically();
+            return time;
+        }
+        catch(Exception ex){
+            log.warn("write event error");
+        }
+    
     }
 
     @Override
