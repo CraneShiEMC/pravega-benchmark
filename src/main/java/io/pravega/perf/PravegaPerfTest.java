@@ -473,11 +473,11 @@ public class PravegaPerfTest {
                     ReaderGroup readerGroup1 = streamHandle.createReaderGroup(false, clientConfig,streamCut,"readerGroup1");
                     log.info("-------------- Create new reader group {} with streamcut {} at {} -------------------", "readerGroup1",streamCut, System.currentTimeMillis());
                 
-                    ReaderGroup readerGroup2 = streamHandle.createReaderGroup(false, clientConfig,streamCut,"readerGroup2");
-                    log.info("-------------- Create new reader group {} with streamcut {} at {} -------------------", "readerGroup2",streamCut, System.currentTimeMillis());
-                    // readerGroup1.getEndOfDataNotifier(notifier).registerListener(this);
+                    // ReaderGroup readerGroup2 = streamHandle.createReaderGroup(false, clientConfig,streamCut,"readerGroup2");
+                    // log.info("-------------- Create new reader group {} with streamcut {} at {} -------------------", "readerGroup2",streamCut, System.currentTimeMillis());
+                    // // readerGroup1.getEndOfDataNotifier(notifier).registerListener(this);
                     readerGroups.add(readerGroup1);
-                    readerGroups.add(readerGroup2);
+                    //readerGroups.add(readerGroup2);
                 }
                 streamMap.put(newStreamName, "readerGroup1");
 
