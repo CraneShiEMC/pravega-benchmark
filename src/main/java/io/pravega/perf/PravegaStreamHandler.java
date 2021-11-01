@@ -151,14 +151,15 @@ public class PravegaStreamHandler {
         }
     }
 
-    ReaderGroup createReaderGroup(boolean reset, ClientConfig clientConfig, StreamCut streamcut) throws URISyntaxException {
+    ReaderGroup createReaderGroup(boolean reset, ClientConfig clientConfig, StreamCut streamcut, String rgPrefix) throws URISyntaxException {
         if (readerGroupManager == null) {
             readerGroupManager = ReaderGroupManager.withScope(scope, clientConfig);
             rdGrpConfig = ReaderGroupConfig.builder()
                     .stream(Stream.of(scope, stream),StreamCut.UNBOUNDED, streamcut).build();
         }
-        readerGroupManager.createReaderGroup(rdGrpName, rdGrpConfig);
-        final ReaderGroup rdGroup = readerGroupManager.getReaderGroup(rdGrpName);
+        String readerGroupName=rdGrpName+rgPrefix;
+        readerGroupManager.createReaderGroup(readerGroupName, rdGrpConfig);
+        final ReaderGroup rdGroup = readerGroupManager.getReaderGroup(readerGroupName);
         if (reset) {
             rdGroup.resetReaderGroup(rdGrpConfig);
         }

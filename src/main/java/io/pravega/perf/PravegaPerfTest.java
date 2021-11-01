@@ -470,9 +470,11 @@ public class PravegaPerfTest {
                 log.info("default setting for enableConnectionPooling {}",enableConnectionPooling);
                 if (consumerCount > 0) {
                     StreamCut streamCut=streamHandle.getCurrentStreamInfo().getTailStreamCut();
-                    ReaderGroup readerGroup = streamHandle.createReaderGroup(!writeAndRead, clientConfig,streamCut);
+                    ReaderGroup readerGroup = streamHandle.createReaderGroup(!writeAndRead, clientConfig,streamCut,"rg1");
+                    ReaderGroup readerGroup2 = streamHandle.createReaderGroup(!writeAndRead, clientConfig,streamCut,"rg2");
                     readerGroup.getEndOfDataNotifier(notifier).registerListener(this);
                     readerGroups.add(readerGroup);
+                    readerGroups.add(readerGroup2);
                     log.info("-------------- Create new reader group {} with streamcut {} at {} -------------------", newRdGrpName,streamCut, System.currentTimeMillis());
                 }
                 streamMap.put(newStreamName, newRdGrpName);
@@ -526,19 +528,29 @@ public class PravegaPerfTest {
             final List<ReaderWorker> allReaders;
             if (consumerCount > 0) {
                 allReaders = new ArrayList<>();
-                streamMap.forEach((streamName, rdGrpName) -> {
+                readerGroups.forEach(rg->{
                     final List<ReaderWorker> readers;
-                    readers = IntStream.range(0, consumerCount)
-                            .boxed()
-                            .map(i -> new PravegaReaderWorker(i, eventsPerConsumer,
-                                    runtimeSec, startTime, consumeStats,
-                                    rdGrpName, TIMEOUT, writeAndRead, factory,
-                                    io.pravega.client.stream.Stream.of(scopeName, streamName),
-                                    readWatermarkPeriodMillis, readDelay, streamHandle))
-                            .collect(Collectors.toList());
-                    log.info("---------- Create {} readers for stream {} ----------", readers.size(), streamName);
-                    allReaders.addAll(readers);
+                    ReaderWorker reader = new PravegaReaderWorker(0, eventsPerConsumer,
+                                        runtimeSec, startTime, consumeStats,
+                                        rg.getGroupName(), TIMEOUT, writeAndRead, factory,
+                                        io.pravega.client.stream.Stream.of(scopeName, streamName),
+                                        readWatermarkPeriodMillis, readDelay, streamHandle);
+                    allReaders.add(reader);
                 });
+               
+                // streamMap.forEach((streamName, rdGrpName) -> {
+                //     final List<ReaderWorker> readers;
+                //     readers = IntStream.range(0, consumerCount)
+                //             .boxed()
+                //             .map(i -> new PravegaReaderWorker(i, eventsPerConsumer,
+                //                     runtimeSec, startTime, consumeStats,
+                //                     rdGrpName, TIMEOUT, writeAndRead, factory,
+                //                     io.pravega.client.stream.Stream.of(scopeName, streamName),
+                //                     readWatermarkPeriodMillis, readDelay, streamHandle))
+                //             .collect(Collectors.toList());
+                //     log.info("---------- Create {} readers for stream {} ----------", readers.size(), streamName);
+                //     allReaders.addAll(readers);
+                // });
 
             } else {
                 allReaders = null;
