@@ -133,7 +133,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 time = System.currentTimeMillis();
                 ret = readData();
                 if (ret != null) {
-                    log.info("received event {}", ret.toString());
+                    log.info("received event {}", new String(ret));
                     stats.recordTime(time, System.currentTimeMillis(), ret.length);
                 }
             }
