@@ -74,14 +74,14 @@ public class PravegaWriterWorker extends WriterWorker {
         ret = producer.writeEvent(Long.toString(time).getBytes());
         ret.thenAccept(d -> {
             record.accept(time, System.currentTimeMillis(), data.length);
-            log.info("event is written: {}", data.toString());
-            if(lastStreamCut==null){
-                lastStreamCut = streamHandle.getCurrentStreamInfo().getTailStreamCut();
-            }
-            if(!lastStreamCut.toString().equals(streamHandle.getCurrentStreamInfo().getTailStreamCut().toString())){
-                log.info("tail stream cut changed");
-            }
-            lastStreamCut = streamHandle.getCurrentStreamInfo().getTailStreamCut();
+            log.info("event is written: {}", Long.toString(time));
+            // if(lastStreamCut==null){
+            //     lastStreamCut = streamHandle.getCurrentStreamInfo().getTailStreamCut();
+            // }
+            // if(!lastStreamCut.toString().equals(streamHandle.getCurrentStreamInfo().getTailStreamCut().toString())){
+            //     log.info("tail stream cut changed");
+            // }
+            // lastStreamCut = streamHandle.getCurrentStreamInfo().getTailStreamCut();
         });
         noteTimePeriodically();
         return time;
