@@ -92,6 +92,7 @@ public class PravegaWriterWorker extends WriterWorker {
         }
         catch(Exception ex){
             log.warn("write event error");
+            return time;
         }
     
     }
