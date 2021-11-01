@@ -77,7 +77,6 @@ public class PravegaWriterWorker extends WriterWorker {
             ret.get();
             ret.thenAccept(d -> {
                 record.accept(time, System.currentTimeMillis(), data.length);
-                log.info("event is written: {}", Long.toString(time));
                 // if(lastStreamCut==null){
                 //     lastStreamCut = streamHandle.getCurrentStreamInfo().getTailStreamCut();
                 // }
@@ -86,6 +85,7 @@ public class PravegaWriterWorker extends WriterWorker {
                 // }
                 // lastStreamCut = streamHandle.getCurrentStreamInfo().getTailStreamCut();
                 log.info("current tailstreamcut {}",streamHandle.getCurrentStreamInfo().getTailStreamCut());
+                log.info("event is written: {}", Long.toString(time));
             });
             noteTimePeriodically();
             return time;
