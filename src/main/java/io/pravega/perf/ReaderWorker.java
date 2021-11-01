@@ -66,7 +66,9 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     }
 
     private void batchWrite(ArrayList<byte[]> dataList){
+        log.info("batch event write start time {}",System.nanoTime());
         producer.writeEvents("testing", dataList);
+        log.info("batch event write end time {}",System.nanoTime());
     }
 
     private Performance createBenchmark() {
@@ -157,12 +159,13 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 ret = readData();
                 if (ret != null) {
                     if(enableBatch){
-                        while(eventList.size()<batchSize){
+                        if(eventList.size()>=batchSize){
+                            batchWrite(eventList);
+                            eventList.clear();
+                            stats.recordTime(time, System.currentTimeMillis(), ret.length*batchSize);
+                        }else{
                             eventList.add(ret);
                         }
-                        batchWrite(eventList);
-                        eventList.clear();
-                        stats.recordTime(time, System.currentTimeMillis(), ret.length*batchSize);
                     }
                     else{
                         writeEvent(ret);
