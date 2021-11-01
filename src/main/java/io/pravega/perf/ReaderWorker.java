@@ -66,9 +66,11 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     }
 
     private void batchWrite(ArrayList<byte[]> dataList){
-        log.info("batch event write start time {}",System.nanoTime());
-        producer.writeEvents("testing", dataList);
-        log.info("batch event write end time {}",System.nanoTime());
+        //log.info("batch event write start time {}",System.nanoTime());
+        producerList.get(count.incrementAndGet() % 30).writeEvents("testing", dataList);
+        //producer.writeEvents("testing", dataList);
+        //log.info("batch event write end time {}",System.nanoTime());
+       //execute time: 39,134,581 us
     }
 
     private Performance createBenchmark() {
