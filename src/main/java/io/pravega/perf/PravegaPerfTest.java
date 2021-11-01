@@ -532,17 +532,13 @@ public class PravegaPerfTest {
             if (consumerCount > 0) {
                 allReaders = new ArrayList<>();
                 readerGroups.forEach(rdGrpName->{
-                    final List<ReaderWorker> readers;
-                    readers = IntStream.range(0, consumerCount)
-                            .boxed()
-                            .map(i -> new PravegaReaderWorker(i, eventsPerConsumer,
-                                    runtimeSec, startTime, consumeStats,
-                                    rdGrpName.getGroupName(), TIMEOUT, writeAndRead, factory,
-                                    io.pravega.client.stream.Stream.of(scopeName, streamName),
-                                    readWatermarkPeriodMillis, readDelay, streamHandle))
-                            .collect(Collectors.toList());
-                    log.info("---------- Create {} readers for stream {} with readergroup {}---------- ", readers.size(), streamName,rdGrpName.getGroupName() );
-                    allReaders.addAll(readers);
+                ReaderWorker reader = new PravegaReaderWorker(0, eventsPerConsumer,
+                            runtimeSec, startTime, consumeStats,
+                            rdGrpName.getGroupName(), TIMEOUT, writeAndRead, factory,
+                            io.pravega.client.stream.Stream.of(scopeName, streamName),
+                            readWatermarkPeriodMillis, readDelay, streamHandle);
+                    log.info("---------- Create reader for stream {} with readergroup {}---------- ",streamName,rdGrpName.getGroupName() );
+                    allReaders.add(reader);
                 });
                 // streamMap.forEach((streamName, rdGrpName) -> {
                 //     final List<ReaderWorker> readers;
