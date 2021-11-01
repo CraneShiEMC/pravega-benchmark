@@ -61,7 +61,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         //log.info("writeEvent start time {}",System.nanoTime());
         //producerList.get(count.incrementAndGet() % 30).writeEvent(data);
        // producer.writeEvent(data);
-       producerList.get(count.incrementAndGet() % 30).writeEvents("testing", dataList);
+       producerList.get(count.incrementAndGet() % 30).writeEvent(data);
         //log.info("writeEvent end time {}",System.nanoTime());
         // execute time: 18,614 us
     }
