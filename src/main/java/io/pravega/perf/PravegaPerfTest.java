@@ -257,7 +257,7 @@ public class PravegaPerfTest {
             events = parseIntOption(commandline, "events", 0);
             isEnableRoutingKey = parseBooleanOption(commandline, "enableRoutingKey", false);
             enableBatch = parseBooleanOption(commandline, "enableBatch", true);
-            batchSize = parseIntOption(commandline, "batchSize", 10);
+            batchSize = parseIntOption(commandline, "batchSize", 100);
             readStreamName = parseStringOption(commandline, "readStreamName", "month-stream");
             writeStreamName = parseStringOption(commandline, "writeStreamName", "day-stream");
             if (commandline.hasOption("flush")) {
@@ -426,6 +426,7 @@ public class PravegaPerfTest {
 
         private int parseIntOption(CommandLine commandline, String option, int defaultValue) {
             if (commandline.hasOption(option)) {
+                log.info("option {}, value {}",option,commandline.getOptionValue(option));
                 return Integer.parseInt(commandline.getOptionValue(option));
             } else {
                 return defaultValue;
