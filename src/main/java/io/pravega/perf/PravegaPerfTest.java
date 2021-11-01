@@ -575,7 +575,7 @@ public class PravegaPerfTest {
                                     runtimeSec, startTime, consumeStats,
                                     rdGrpName, TIMEOUT, writeAndRead, factory,
                                     io.pravega.client.stream.Stream.of(scopeName, streamName),
-                                    readWatermarkPeriodMillis, batchSize, producerList);
+                                    readWatermarkPeriodMillis, batchSize, producerList,enableBatch);
                            
                     log.info("---------- Create  reader for stream {} ----------", streamName);
                     allReaders.add(reader);

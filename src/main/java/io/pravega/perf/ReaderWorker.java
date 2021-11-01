@@ -40,9 +40,10 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     final private Random random = new Random();
     private PerfStats produceWriterStats;
     private AtomicInteger count = new AtomicInteger(0);
+    final private boolean enableBatch;
 
     ReaderWorker(int readerId, int events, int secondsToRun, long start,
-                 PerfStats stats, String readerGrp, int timeout, boolean writeAndRead, int batchSize, List<EventStreamWriter<byte[]>> producerList) {
+                 PerfStats stats, String readerGrp, int timeout, boolean writeAndRead, int batchSize, List<EventStreamWriter<byte[]>> producerList, boolean enableBatch) {
         super(readerId, events, secondsToRun, 0, start, stats, readerGrp, timeout);
 
         this.writeAndRead = writeAndRead;
@@ -52,6 +53,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         log.info("producer list: {}", producerList.size());
         producer = producerList.get(0);
         produceWriterStats = new PerfStats("Writing", 5000, 120, null, null);
+        this.enableBatch = enableBatch;
        
     }
 
@@ -62,6 +64,11 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         //log.info("writeEvent end time {}",System.nanoTime());
         // execute time: 18,614 us
     }
+
+    private void batchWrite(ArrayList<byte[]> dataList){
+        producer.writeEvents("testing", dataList);
+    }
+
     private Performance createBenchmark() {
         log.info("create benchmark for reader");
         final Performance perfReader;
@@ -143,15 +150,26 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         final long msToRun = secondsToRun * MS_PER_SEC;
         byte[] ret = null;
         long time = System.currentTimeMillis();
+        ArrayList<byte[]> eventList = new ArrayList<>();
         try {
             while ((time - startTime) < msToRun) {
                 time = System.currentTimeMillis();
                 ret = readData();
                 if (ret != null) {
-                    stats.recordTime(time, System.currentTimeMillis(), ret.length);
+                    if(enableBatch){
+                        while(eventList.size()<batchSize){
+                            eventList.add(ret);
+                        }
+                        batchWrite(eventList);
+                        eventList.clear();
+                        stats.recordTime(time, System.currentTimeMillis(), ret.length*batchSize);
+                    }
+                    else{
+                        writeEvent(ret);
+                        stats.recordTime(time, System.currentTimeMillis(), ret.length);
+                    }
                     // log.info("receive event {}", ret);
                     //log.info("read data time: {}", System.nanoTime());
-                    writeEvent(ret);
                 }
                 // eventList.add(ret);
             }
