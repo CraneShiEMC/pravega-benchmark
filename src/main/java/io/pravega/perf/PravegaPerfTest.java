@@ -470,12 +470,17 @@ public class PravegaPerfTest {
                 log.info("default setting for enableConnectionPooling {}",enableConnectionPooling);
                 if (consumerCount > 0) {
                     StreamCut streamCut=streamHandle.getCurrentStreamInfo().getTailStreamCut();
-                    ReaderGroup readerGroup = streamHandle.createReaderGroup(!writeAndRead, clientConfig,streamCut);
-                    readerGroup.getEndOfDataNotifier(notifier).registerListener(this);
-                    readerGroups.add(readerGroup);
-                    log.info("-------------- Create new reader group {} with streamcut {} at {} -------------------", newRdGrpName,streamCut, System.currentTimeMillis());
+                    ReaderGroup readerGroup1 = streamHandle.createReaderGroup(!writeAndRead, clientConfig,streamCut,"readerGroup1");
+                    log.info("-------------- Create new reader group {} with streamcut {} at {} -------------------", "readerGroup1",streamCut, System.currentTimeMillis());
+                    Thread.sleep(5000);
+                    StreamCut streamCut2=streamHandle.getCurrentStreamInfo().getTailStreamCut();
+                    ReaderGroup readerGroup2 = streamHandle.createReaderGroup(!writeAndRead, clientConfig,streamCut2,"readerGroup1");
+                    log.info("-------------- Create new reader group {} with streamcut {} at {} -------------------", "readerGroup2",streamCut2, System.currentTimeMillis());
+                    // readerGroup1.getEndOfDataNotifier(notifier).registerListener(this);
+                    readerGroups.add(readerGroup1);
+                    readerGroups.add(readerGroup2);
                 }
-                streamMap.put(newStreamName, newRdGrpName);
+                streamMap.put(newStreamName, "readerGroup1");
 
 
             factory = new ClientFactoryImpl(scopeName, controller, new SocketConnectionFactoryImpl(clientConfig));
@@ -526,19 +531,32 @@ public class PravegaPerfTest {
             final List<ReaderWorker> allReaders;
             if (consumerCount > 0) {
                 allReaders = new ArrayList<>();
-                streamMap.forEach((streamName, rdGrpName) -> {
+                readerGroups.forEach(rdGrpName->{
                     final List<ReaderWorker> readers;
                     readers = IntStream.range(0, consumerCount)
                             .boxed()
                             .map(i -> new PravegaReaderWorker(i, eventsPerConsumer,
                                     runtimeSec, startTime, consumeStats,
-                                    rdGrpName, TIMEOUT, writeAndRead, factory,
+                                    rdGrpName.getGroupName(), TIMEOUT, writeAndRead, factory,
                                     io.pravega.client.stream.Stream.of(scopeName, streamName),
                                     readWatermarkPeriodMillis, readDelay, streamHandle))
                             .collect(Collectors.toList());
-                    log.info("---------- Create {} readers for stream {} ----------", readers.size(), streamName);
+                    log.info("---------- Create {} readers for stream {} with readergroup {}---------- ", readers.size(), streamName,rdGrpName.getGroupName() );
                     allReaders.addAll(readers);
                 });
+                // streamMap.forEach((streamName, rdGrpName) -> {
+                //     final List<ReaderWorker> readers;
+                //     readers = IntStream.range(0, consumerCount)
+                //             .boxed()
+                //             .map(i -> new PravegaReaderWorker(i, eventsPerConsumer,
+                //                     runtimeSec, startTime, consumeStats,
+                //                     rdGrpName, TIMEOUT, writeAndRead, factory,
+                //                     io.pravega.client.stream.Stream.of(scopeName, streamName),
+                //                     readWatermarkPeriodMillis, readDelay, streamHandle))
+                //             .collect(Collectors.toList());
+                //     log.info("---------- Create {} readers for stream {} ----------", readers.size(), streamName);
+                //     allReaders.addAll(readers);
+                // });
 
             } else {
                 allReaders = null;
