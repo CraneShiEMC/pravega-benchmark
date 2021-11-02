@@ -18,6 +18,9 @@ import io.pravega.client.control.impl.ControllerImpl;
 import io.pravega.client.control.impl.ControllerImplConfig;
 import io.pravega.client.stream.ReaderGroup;
 import io.pravega.client.stream.impl.ClientFactoryImpl;
+import io.pravega.client.stream.notifications.EndOfDataNotification;
+import io.pravega.client.stream.notifications.Listener;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -38,6 +41,8 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * Performance benchmark for Pravega.
@@ -426,11 +431,13 @@ public class PravegaPerfTest {
 
     }
 
-    static private class PravegaTest extends Test {
+    static private class PravegaTest extends Test implements Listener<EndOfDataNotification> {
 //        final PravegaStreamHandler streamHandle;
         final EventStreamClientFactory factory;
         final List<ReaderGroup> readerGroups = new ArrayList<>();
         final HashMap<String, String> streamMap = new HashMap<>();
+        private final ScheduledExecutorService notifier = Executors.newSingleThreadScheduledExecutor(
+            new ThreadFactoryBuilder().setNameFormat("Notifier" + "-%03d").build());
 
         PravegaTest(long startTime, CommandLine commandline) throws Exception {
             super(startTime, commandline);
@@ -462,6 +469,7 @@ public class PravegaPerfTest {
                 log.info("default setting for enableConnectionPooling {}",enableConnectionPooling);
                 if (consumerCount > 0) {
                     ReaderGroup readerGroup = streamHandle.createReaderGroup(!writeAndRead, clientConfig);
+                    readerGroup.getEndOfDataNotifier(notifier).registerListener(this);
                     readerGroups.add(readerGroup);
                     log.info("-------------- Create new reader group {} -------------------", newRdGrpName);
                 }
@@ -573,6 +581,11 @@ public class PravegaPerfTest {
                 ", enableConnectionPooling=" + enableConnectionPooling +
                 ", writeWatermarkPeriodMillis=" + writeWatermarkPeriodMillis +
                 ", readWatermarkPeriodMillis=" + readWatermarkPeriodMillis;
+        }
+
+        @Override
+        public void onNotification(EndOfDataNotification notification) {
+            log.info("stream reached end in readerGroup");
         }
     }
 }
