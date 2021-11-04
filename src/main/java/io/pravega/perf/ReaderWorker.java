@@ -179,7 +179,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
             
         } 
         catch(Exception e){
-            
+            log.error("read event error");
         }finally {
             close();
         }
