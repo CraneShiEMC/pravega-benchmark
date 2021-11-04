@@ -151,6 +151,11 @@ public class PravegaStreamHandler {
         }
     }
 
+    ReaderGroup getReaderGroup(String rgName){
+        return readerGroupManager.getReaderGroup(rgName);
+
+    }
+
     ReaderGroup createReaderGroup(boolean reset, ClientConfig clientConfig, StreamCut streamcut) throws URISyntaxException {
         if (readerGroupManager == null) {
             readerGroupManager = ReaderGroupManager.withScope(scope, clientConfig);

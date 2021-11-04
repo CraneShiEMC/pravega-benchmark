@@ -18,6 +18,9 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * An Abstract class for Readers.
@@ -29,6 +32,8 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     final private boolean writeAndRead;
     final private int readDelay;
     final private PravegaStreamHandler streamHandler;
+    final private String readerGrp;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     ReaderWorker(int readerId, int events, int secondsToRun, long start,
                  PerfStats stats, String readerGrp, int timeout, boolean writeAndRead, int readDelay, PravegaStreamHandler streamHandle) {
@@ -37,6 +42,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         this.writeAndRead = writeAndRead;
         this.readDelay = readDelay;
         this.perf = createBenchmark();
+        this.readerGrp = readerGrp;
         this.streamHandler = streamHandle;
 
     }
@@ -127,11 +133,27 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         final long msToRun = secondsToRun * MS_PER_SEC;
         byte[] ret = null;
         long time = System.currentTimeMillis();
+        ScheduledExecutorService backgroundExecutor = Executors.newScheduledThreadPool(1);
+        backgroundExecutor.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    log.info("backgroup executor");
+                } catch (Exception ex) {
+                    log.error("dumpTaskFuture.run() caught exception:",ex);
+                }
+            }
+        }, 0, 1000, TimeUnit.MILLISECONDS);
 
         try {
             while ((time - startTime) < msToRun) {
                 time = System.currentTimeMillis();
                 ret = readData();
+                log.info("CURRENT STREAMCUT: {}",streamHandler.getReaderGroup(readerGrp).getStreamCuts());
+                streamHandler.getReaderGroup(readerGrp).generateStreamCuts(backgroundExecutor).thenAccept(map->{
+                for (var entry : map.entrySet()) {
+                        log.info("GENERATESTREAMCUT  stream:{}, streamcut:{}",entry.getKey(),entry.getValue());
+                }
                 if (ret != null) {
                     log.info("received event {}", new String(ret));
                     stats.recordTime(time, System.currentTimeMillis(), ret.length);
