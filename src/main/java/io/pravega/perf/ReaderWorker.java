@@ -157,15 +157,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         long time = System.currentTimeMillis();
         ArrayList<byte[]> eventList = new ArrayList<>();
         try {
-            while ((time - startTime) < msToRun) {
-                time = System.currentTimeMillis();
-                ret = readData();
-                final long INTERVAL = 600;
-                long start = System.nanoTime();
-                long end=0;
-                do{
-                    end = System.nanoTime();
-                }while(start + INTERVAL >= end);
+                Thread.sleep(38);
                 if (ret != null) {
                     if(enableBatch){
                         if(eventList.size()>=batchSize){
@@ -184,8 +176,11 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                     //log.info("read data time: {}", System.nanoTime());
                 }
                 // eventList.add(ret);
-            }
-        } finally {
+            
+        } 
+        catch(Exception e){
+            
+        }finally {
             close();
         }
     }
