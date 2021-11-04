@@ -156,7 +156,9 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         byte[] ret = null;
         long time = System.currentTimeMillis();
         ArrayList<byte[]> eventList = new ArrayList<>();
+        
         try {
+            while ((time - startTime) < msToRun) {
                 Thread.sleep(38);
                 if (ret != null) {
                     if(enableBatch){
@@ -172,11 +174,8 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                         writeEvent(ret);
                         stats.recordTime(time, System.currentTimeMillis(), ret.length);
                     }
-                    // log.info("receive event {}", ret);
-                    //log.info("read data time: {}", System.nanoTime());
                 }
-                // eventList.add(ret);
-            
+            }
         } 
         catch(Exception e){
             log.error("read event error");
