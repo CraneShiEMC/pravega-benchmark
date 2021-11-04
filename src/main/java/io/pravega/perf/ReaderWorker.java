@@ -160,7 +160,12 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
             while ((time - startTime) < msToRun) {
                 time = System.currentTimeMillis();
                 ret = readData();
-                //Thread.sleep(38);
+                final long INTERVAL = 38841;
+                long start = System.nanoTime();
+                long end=0;
+                do{
+                    end = System.nanoTime();
+                }while(start + INTERVAL >= end);
                 if (ret != null) {
                     if(enableBatch){
                         if(eventList.size()>=batchSize){
