@@ -153,7 +153,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 streamHandler.getReaderGroup(readerGrp).generateStreamCuts(backgroundExecutor).thenAccept(map->{
                 for (var entry : map.entrySet()) {
                         log.info("GENERATESTREAMCUT  stream:{}, streamcut:{}",entry.getKey(),entry.getValue());
-                }
+                }});
                 if (ret != null) {
                     log.info("received event {}", new String(ret));
                     stats.recordTime(time, System.currentTimeMillis(), ret.length);
