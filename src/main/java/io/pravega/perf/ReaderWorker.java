@@ -16,11 +16,14 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Map.Entry;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import io.pravega.client.stream.*;
 
 /**
  * An Abstract class for Readers.
@@ -151,7 +154,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 ret = readData();
                 log.info("CURRENT STREAMCUT: {}",streamHandler.getReaderGroup(readerGrp).getStreamCuts());
                 streamHandler.getReaderGroup(readerGrp).generateStreamCuts(backgroundExecutor).thenAccept(map->{
-                for (var entry : map.entrySet()) {
+                for ( Entry<Stream, StreamCut> entry : map.entrySet()) {
                         log.info("GENERATESTREAMCUT  stream:{}, streamcut:{}",entry.getKey(),entry.getValue());
                 }});
                 if (ret != null) {
