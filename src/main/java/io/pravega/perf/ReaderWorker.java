@@ -154,7 +154,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 ret = readData();
                 log.info("CURRENT STREAMCUT: {}",streamHandler.getReaderGroup(readerGrp).getStreamCuts());
                 streamHandler.getReaderGroup(readerGrp).generateStreamCuts(backgroundExecutor).thenAccept(map->{
-                for ( Entry<Stream, StreamCut> entry : map.entrySet()) {
+                for (Entry<Stream, StreamCut> entry : map.entrySet()) {
                         log.info("GENERATESTREAMCUT  stream:{}, streamcut:{}",entry.getKey(),entry.getValue());
                 }});
                 if (ret != null) {
