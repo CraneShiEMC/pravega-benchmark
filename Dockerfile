@@ -24,7 +24,6 @@ COPY --chown=gradle:gradle src /home/gradle/src/src
 WORKDIR /home/gradle/src
 
 ENV GRADLE_USER_HOME=/home/gradle
-RUN gradle createFlatBuffers
 RUN gradle installDist \
 --no-daemon --info --stacktrace
 
