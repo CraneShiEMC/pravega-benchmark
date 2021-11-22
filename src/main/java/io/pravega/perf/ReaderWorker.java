@@ -30,10 +30,10 @@ import io.pravega.client.stream.EventStreamWriter;
  * An Abstract class for Readers.
  */
 public abstract class ReaderWorker extends Worker implements Callable<Void> {
+    private static Logger log = LoggerFactory.getLogger(ReaderWorker.class);
     final private static int MS_PER_SEC = 1000;
     final private Performance perf;
     final private boolean writeAndRead;
-    private static Logger log = LoggerFactory.getLogger(ReaderWorker.class);
     final private int batchSize;
     final List<EventStreamWriter<byte[]>> producerList;
     final private EventStreamWriter<byte[]> producer;
@@ -41,12 +41,14 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     private PerfStats produceWriterStats;
     private AtomicInteger count = new AtomicInteger(0);
     final private boolean enableBatch;
+    private int readDelay;
 
     ReaderWorker(int readerId, int events, int secondsToRun, long start,
-                 PerfStats stats, String readerGrp, int timeout, boolean writeAndRead, int batchSize, List<EventStreamWriter<byte[]>> producerList, boolean enableBatch) {
+                 PerfStats stats, String readerGrp, int timeout, boolean writeAndRead, int readDelay,int batchSize, List<EventStreamWriter<byte[]>> producerList, boolean enableBatch) {
         super(readerId, events, secondsToRun, 0, start, stats, readerGrp, timeout);
 
         this.writeAndRead = writeAndRead;
+        this.readDelay = readDelay;
         this.perf = createBenchmark();
         this.batchSize = batchSize;
         this.producerList = producerList;
@@ -54,7 +56,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         producer = producerList.get(0);
         produceWriterStats = new PerfStats("Writing", 5000, 120, null, null);
         this.enableBatch = enableBatch;
-       
+
     }
 
     private void writeEvent(byte[] data){
@@ -99,9 +101,15 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     @Override
     public Void call() throws InterruptedException, ExecutionException, IOException {
         try {
+            if(writeAndRead) {
+                log.info("start sleep {} seconds", readDelay);
+                Thread.sleep(readDelay * 1000);
+            }
+            log.info("run reader worker");
             perf.benchmark();
+            log.info("complete reader worker");
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("reader worker exception", e);
             throw e;
         }
         return null;
@@ -185,7 +193,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 }
                 // eventList.add(ret);
             }
-        } 
+        }
         catch(Exception e){
             log.info("fail to write event");
         }finally {
@@ -197,18 +205,31 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     public void EventsTimeReaderRW() throws IOException {
         log.info("EventsTimeReaderRW: Running");
         final long msToRun = secondsToRun * MS_PER_SEC;
-        final ByteBuffer timeBuffer = ByteBuffer.allocate(TIME_HEADER_SIZE);
         byte[] ret = null;
         long time = System.currentTimeMillis();
         try {
             while ((time - startTime) < msToRun) {
-                ret = readData();
-                time = System.currentTimeMillis();
-                if (ret != null) {
-                    timeBuffer.clear();
-                    timeBuffer.put(ret, 0, TIME_HEADER_SIZE);
-                    final long start = timeBuffer.getLong(0);
-                    stats.recordTime(start, time, ret.length);
+                try {
+                    ret = readData();
+                    time = System.currentTimeMillis();
+                    if (ret != null) {
+                        long startDeserialize = System.nanoTime();
+                        java.nio.ByteBuffer buf = java.nio.ByteBuffer.wrap(ret);
+                        long startDeserialize2 = System.nanoTime();
+                        Event event = Event.getRootAsEvent(buf);
+                        final long  start = event.header().executionTime();
+                        final String  routingKey = event.header().routingKey();
+                        final String  targetStream = event.header().targetStream();
+                        long endDeserialize = System.nanoTime();
+                        stats.recordTime(start, time, ret.length);
+                        log.info("execution time {}", start);
+                        log.info("routingKey {}", routingKey);
+                        log.info("targetStream {}", targetStream);
+                        log.info("deserialize time {}", endDeserialize - startDeserialize);
+                        log.info("deserialize time without buffer copy {}", endDeserialize - startDeserialize2);
+                    }
+                } catch (Exception e) {
+                    log.error("read exception", e);
                 }
             }
         } finally {
