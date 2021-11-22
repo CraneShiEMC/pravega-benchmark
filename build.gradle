@@ -13,7 +13,6 @@ apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'application'
 
-
 buildscript {
     repositories {
         jcenter()
@@ -27,18 +26,18 @@ buildscript {
         maven {
             name "release"
             url "http://asdrepo.isus.emc.com:8101/artifactory/nautilus-build"
-        }
+            }
+        maven { url "https://plugins.gradle.org/m2/" }
     }
 
     dependencies {
-
         compile "io.pravega:pravega-client:${pravegaVersion}",
                 "io.pravega:pravega-common:${pravegaVersion}",
                 "commons-cli:commons-cli:${commonsCLIVersion}",
                 "org.apache.commons:commons-csv:${commonsCSVVersion}",
                 "org.apache.commons:commons-math3:${commonsMathVersion}",
-                "org.apache.commons:commons-io:${commonsIOVersion}"
-
+                "org.apache.commons:commons-io:${commonsIOVersion}",
+                "com.google.flatbuffers:flatbuffers-java:2.0.3"
         runtime "org.slf4j:slf4j-simple:${slf4jSimpleVersion}"
     }
 mainClassName = "io.pravega.perf.PravegaPerfTest"
