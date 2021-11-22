@@ -1,0 +1,19 @@
+namespace Benchmark.Event;
+
+enum Type:byte { Tiering = 0, C2C = 1,  Inventory = 2}
+
+
+table Event {
+  header:Header;
+  payload:[byte];
+}
+
+table Header {
+  type:Type;
+  targetStream:string; // Struct.
+  routingKey:string;
+  executionTime:long;
+}
+
+
+root_type Event;
