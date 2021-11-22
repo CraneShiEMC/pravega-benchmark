@@ -10,6 +10,10 @@
 
 package io.pravega.perf;
 
+import Benchmark.Event.Event;
+import Benchmark.Event.Header;
+import Benchmark.Event.Type;
+import com.google.flatbuffers.FlatBufferBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -212,16 +216,31 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
     private void EventsWriterTimeRW() throws InterruptedException, IOException {
         log.info("EventsWriterTimeRW: Running");
         final long msToRun = secondsToRun * MS_PER_SEC;
-        final ByteBuffer timeBuffer = ByteBuffer.allocate(TIME_HEADER_SIZE);
         long time = System.currentTimeMillis();
         final EventsController eCnt = new EventsController(time, eventsPerSec);
-        RateLimiter rateLimiter = RateLimiter.create(eventsPerSec);;
+        RateLimiter rateLimiter = RateLimiter.create(eventsPerSec);
+        FlatBufferBuilder builder = new FlatBufferBuilder(1024);
+
         for (int i = 0; (time - startTime) < msToRun; i++) {
             time = System.currentTimeMillis();
-            byte[] bytes = timeBuffer.putLong(0, System.currentTimeMillis()).array();
-            System.arraycopy(bytes, 0, payload, 0, bytes.length);
+            long start = System.nanoTime();
+            Event.startEvent(builder);
+            Event.addHeader(builder,
+                    Header.createHeader(builder, Type.C2C,
+                            builder.createString("dummy-targetStream"),
+                            builder.createString("dummy-routingKey"),
+                            time));
+            Event.addPayload(builder, builder.createByteVector(payload));
+            int eventOffset = Event.endEvent(builder);
+            builder.finish(eventOffset);
+            long end = System.nanoTime();
+            byte[] data = builder.sizedByteArray();
+            long end2 = System.nanoTime();
+            log.info("serialize time {}", end2 - start);
+            log.info("serialize time without buffer copy {}", end - start);
             try{
-                writeData(payload);
+                writeData(data);
+                builder.clear();
                 /*
                 flush is required here for following reasons:
                 1. The writeData is called for End to End latency mode; hence make sure that data is sent.

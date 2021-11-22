@@ -10,6 +10,7 @@
 
 package io.pravega.perf;
 
+import Benchmark.Event.Event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -139,7 +140,6 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
 
     public void EventsTimeReaderRW() throws IOException {
         final long msToRun = secondsToRun * MS_PER_SEC;
-        final ByteBuffer timeBuffer = ByteBuffer.allocate(TIME_HEADER_SIZE);
         byte[] ret = null;
         long time = System.currentTimeMillis();
         try {
@@ -148,10 +148,20 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                     ret = readData();
                     time = System.currentTimeMillis();
                     if (ret != null) {
-                        timeBuffer.clear();
-                        timeBuffer.put(ret, 0, TIME_HEADER_SIZE);
-                        final long start = timeBuffer.getLong(0);
+                        long startDeserialize = System.nanoTime();
+                        java.nio.ByteBuffer buf = java.nio.ByteBuffer.wrap(ret);
+                        long startDeserialize2 = System.nanoTime();
+                        Event event = Event.getRootAsEvent(buf);
+                        final long  start = event.header().executionTime();
+                        final String  routingKey = event.header().routingKey();
+                        final String  targetStream = event.header().targetStream();
+                        long endDeserialize = System.nanoTime();
                         stats.recordTime(start, time, ret.length);
+                        log.info("execution time {}", start);
+                        log.info("routingKey {}", routingKey);
+                        log.info("targetStream {}", targetStream);
+                        log.info("deserialize time {}", endDeserialize - startDeserialize);
+                        log.info("deserialize time without buffer copy {}", endDeserialize - startDeserialize2);
                     }
                 } catch (Exception e) {
                     log.error("read exception", e);
