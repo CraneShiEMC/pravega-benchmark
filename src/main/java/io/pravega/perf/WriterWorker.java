@@ -258,6 +258,8 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         }
         catch (Exception e) {
             log.error("write exception", e);
+        }catch (Throwable t){
+            log.error("throwable", t);
         }
         try {
             flush();
