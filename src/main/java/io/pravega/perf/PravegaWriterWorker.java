@@ -10,12 +10,14 @@
 
 package io.pravega.perf;
 
+import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
 
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.client.stream.impl.ByteArraySerializer;
 import io.pravega.client.stream.EventWriterConfig;
+import io.pravega.client.stream.impl.ByteBufferSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.google.common.util.concurrent.RateLimiter;
@@ -26,7 +28,7 @@ import com.google.common.util.concurrent.RateLimiter;
 public class PravegaWriterWorker extends WriterWorker {
     private static Logger log = LoggerFactory.getLogger(PravegaWriterWorker.class);
 
-    final EventStreamWriter<byte[]> producer;
+    final EventStreamWriter<ByteBuffer> producer;
 
     private final long writeWatermarkPeriodMillis;
 
@@ -52,7 +54,7 @@ public class PravegaWriterWorker extends WriterWorker {
                 stats, streamName, eventsPerSec, writeAndRead);
         log.info("PravegaWriterWorker enableConnectionPooling : {}", enableConnectionPooling);
         this.producer = factory.createEventWriter(streamName,
-                new ByteArraySerializer(),
+                new ByteBufferSerializer(),
                 EventWriterConfig.builder()
                         .retryAttempts(1)
                         .enableConnectionPooling(true)
@@ -62,19 +64,24 @@ public class PravegaWriterWorker extends WriterWorker {
     }
 
     @Override
-    public long recordWrite(byte[] data, TriConsumer record) {
+    public long recordWrite(ByteBuffer data, TriConsumer record) {
         CompletableFuture ret;
         final long time = System.currentTimeMillis();
         ret = producer.writeEvent(data);
         ret.thenAccept(d -> {
-            record.accept(time, System.currentTimeMillis(), data.length);
+            record.accept(time, System.currentTimeMillis(), data.remaining());
         });
         noteTimePeriodically();
         return time;
     }
 
     @Override
-    public void writeData(byte[] data) {
+    public long recordWrite(byte[] data, TriConsumer record) {
+        return 0;
+    }
+
+    @Override
+    public void writeData(ByteBuffer data) {
         producer.writeEvent(data);
         noteTimePeriodically();
     }

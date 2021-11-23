@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.GuardedBy;
+import java.nio.ByteBuffer;
 import java.util.UUID;
 
 public class PravegaTransactionWriterWorker extends WriterWorker {
@@ -66,6 +67,11 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
         eventCount = 0;
     }
 
+    @Override
+    public long recordWrite(ByteBuffer data, TriConsumer record) {
+        return 0;
+    }
+
     /**
      * Writes an event in a transaction. It will begin a new transaction if needed.
      * It periodically commits the current transaction.
@@ -109,7 +115,7 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
      * @param data data to write
      */
     @Override
-    public void writeData(byte[] data) {
+    public void writeData(ByteBuffer data) {
         recordWrite(data, noOpTriConsumer);
     }
 

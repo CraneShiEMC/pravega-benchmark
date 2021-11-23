@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.NotThreadSafe;
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.Random;
 import java.util.concurrent.Callable;
@@ -34,7 +35,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
 
     final private static int MS_PER_SEC = 1000;
     final private Performance perf;
-    final private byte[] payload;
+    final private ByteBuffer payload;
     final private int eventsPerSec;
     final private int EventsPerFlush;
     final private boolean writeAndRead;
@@ -52,13 +53,13 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
     }
 
 
-    private byte[] createPayload(int size) {
+    private ByteBuffer createPayload(int size) {
         Random random = new Random();
         byte[] bytes = new byte[size];
         for (int i = 0; i < size; ++i) {
             bytes[i] = (byte) (random.nextInt(26) + 65);
         }
-        return bytes;
+        return ByteBuffer.wrap(bytes);
     }
 
 
@@ -96,6 +97,9 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
      * @param record to call for benchmarking
      * @return time return the data sent time
      */
+
+    public abstract long recordWrite(ByteBuffer data, TriConsumer record);
+
     public abstract long recordWrite(byte[] data, TriConsumer record);
 
     /**
@@ -103,7 +107,8 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
      *
      * @param data data to write
      */
-    public abstract void writeData(byte[] data);
+    public abstract void writeData(ByteBuffer data);
+
 
     /**
      * Flush the producer data.
@@ -237,12 +242,13 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
                 int eventOffset = Event.endEvent(builder);
                 builder.finish(eventOffset);
                 long end = System.nanoTime();
-                byte[] data = builder.sizedByteArray();
+                //byte[] data = builder.sizedByteArray();
+                ByteBuffer data2 = builder.dataBuffer();
                 long end2 = System.nanoTime();
                 log.info("serialize time {}", end2 - start);
                 log.info("serialize time without buffer copy {}", end - start);
                 try {
-                    writeData(data);
+                    writeData(data2);
                     builder.clear();
                     /*
                     flush is required here for following reasons:
