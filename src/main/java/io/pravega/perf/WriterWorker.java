@@ -243,18 +243,21 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
             try{
                 writeData(data);
                 builder.clear();
-                /*
-                flush is required here for following reasons:
-                1. The writeData is called for End to End latency mode; hence make sure that data is sent.
-                2. In case of kafka benchmarking, the buffering makes too many writes;
-                   flushing moderates the kafka producer.
-                3. If the flush called after several iterations, then flush may take too much of time.
-                */
+                    /*
+                    flush is required here for following reasons:
+                    1. The writeData is called for End to End latency mode; hence make sure that data is sent.
+                    2. In case of kafka benchmarking, the buffering makes too many writes;
+                       flushing moderates the kafka producer.
+                    3. If the flush called after several iterations, then flush may take too much of time.
+                    */
                 rateLimiter.acquire(1);
-                //eCnt.control(i);
-            } catch (Exception e) {
-                log.error("write exception", e);
-            }
+                    //eCnt.control(i);
+                }
+        }
+        catch (Exception e) {
+            log.error("write exception", e);
+        }catch (Throwable t){
+            log.error("throwable", t);
         }
         try {
             flush();
