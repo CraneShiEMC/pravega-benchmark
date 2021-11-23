@@ -157,6 +157,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 time = System.currentTimeMillis();
                 ret = readData();
                 time = System.currentTimeMillis();
+                log.info("event received {}",ret.asReadOnlyBuffer());
                 if (ret != null) {
                     try{
                     long startDeserialize = System.nanoTime();
@@ -211,6 +212,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 try {
                     ret = readData();
                     time = System.currentTimeMillis();
+                    log.info("event received {}",ret.asReadOnlyBuffer());
                     if (ret != null) {
                         long startDeserialize = System.nanoTime();
                         //java.nio.ByteBuffer buf = java.nio.ByteBuffer.wrap(ret);

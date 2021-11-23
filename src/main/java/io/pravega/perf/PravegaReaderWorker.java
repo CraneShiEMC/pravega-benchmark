@@ -44,6 +44,7 @@ public class PravegaReaderWorker extends ReaderWorker {
         super(readerId, events, secondsToRun, start, stats, readergrp, timeout, writeAndRead, batchSize, producerList, enableBatch);
 
         final String readerSt = Integer.toString(readerId);
+        log.info("create reader{} for group {}", readerSt, readergrp);
         reader = factory.createReader(
                 readerSt, readergrp, new ByteBufferSerializer(), ReaderConfig.builder().build());
         this.stream = stream;
