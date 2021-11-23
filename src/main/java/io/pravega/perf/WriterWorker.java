@@ -214,45 +214,46 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
 
 
     private void EventsWriterTimeRW() throws InterruptedException, IOException {
-        log.info("EventsWriterTimeRW: Running");
-        final long msToRun = secondsToRun * MS_PER_SEC;
-        long time = System.currentTimeMillis();
-        final EventsController eCnt = new EventsController(time, eventsPerSec);
-        RateLimiter rateLimiter = RateLimiter.create(eventsPerSec);
-        FlatBufferBuilder builder = new FlatBufferBuilder(1024);
+        try{
+            log.info("EventsWriterTimeRW: Running");
+            final long msToRun = secondsToRun * MS_PER_SEC;
+            long time = System.currentTimeMillis();
+            final EventsController eCnt = new EventsController(time, eventsPerSec);
+            RateLimiter rateLimiter = RateLimiter.create(eventsPerSec);
+            FlatBufferBuilder builder = new FlatBufferBuilder(1024);
+            for (int i = 0; (time - startTime) < msToRun; i++) {
+                time = System.currentTimeMillis();
+                long start = System.nanoTime();
+                Event.startEvent(builder);
+                Event.addHeader(builder,
+                        Header.createHeader(builder, Type.C2C,
+                                builder.createString("dummy-targetStream"),
+                                builder.createString("dummy-routingKey"),
+                                time));
+                Event.addPayload(builder, builder.createByteVector(payload));
+                int eventOffset = Event.endEvent(builder);
+                builder.finish(eventOffset);
+                long end = System.nanoTime();
+                byte[] data = builder.sizedByteArray();
+                long end2 = System.nanoTime();
+                log.info("serialize time {}", end2 - start);
+                log.info("serialize time without buffer copy {}", end - start);
 
-        for (int i = 0; (time - startTime) < msToRun; i++) {
-            time = System.currentTimeMillis();
-            long start = System.nanoTime();
-            Event.startEvent(builder);
-            Event.addHeader(builder,
-                    Header.createHeader(builder, Type.C2C,
-                            builder.createString("dummy-targetStream"),
-                            builder.createString("dummy-routingKey"),
-                            time));
-            Event.addPayload(builder, builder.createByteVector(payload));
-            int eventOffset = Event.endEvent(builder);
-            builder.finish(eventOffset);
-            long end = System.nanoTime();
-            byte[] data = builder.sizedByteArray();
-            long end2 = System.nanoTime();
-            log.info("serialize time {}", end2 - start);
-            log.info("serialize time without buffer copy {}", end - start);
-            try{
-                writeData(data);
-                builder.clear();
-                /*
-                flush is required here for following reasons:
-                1. The writeData is called for End to End latency mode; hence make sure that data is sent.
-                2. In case of kafka benchmarking, the buffering makes too many writes;
-                   flushing moderates the kafka producer.
-                3. If the flush called after several iterations, then flush may take too much of time.
-                */
-                rateLimiter.acquire(1);
-                //eCnt.control(i);
-            } catch (Exception e) {
-                log.error("write exception", e);
-            }
+                    writeData(data);
+                    builder.clear();
+                    /*
+                    flush is required here for following reasons:
+                    1. The writeData is called for End to End latency mode; hence make sure that data is sent.
+                    2. In case of kafka benchmarking, the buffering makes too many writes;
+                       flushing moderates the kafka producer.
+                    3. If the flush called after several iterations, then flush may take too much of time.
+                    */
+                    rateLimiter.acquire(1);
+                    //eCnt.control(i);
+                }
+        }
+        catch (Exception e) {
+            log.error("write exception", e);
         }
         try {
             flush();
