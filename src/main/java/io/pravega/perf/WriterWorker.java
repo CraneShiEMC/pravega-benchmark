@@ -222,6 +222,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
             RateLimiter rateLimiter = RateLimiter.create(eventsPerSec);
             FlatBufferBuilder builder = new FlatBufferBuilder(1024);
             for (int i = 0; (time - startTime) < msToRun; i++) {
+                log.info("enter event writing");
                 time = System.currentTimeMillis();
                 long start = System.nanoTime();
                 Event.startEvent(builder);
