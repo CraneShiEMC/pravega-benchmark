@@ -1,11 +1,11 @@
 /**
  * Copyright (c) 2017 Dell Inc., or its subsidiaries. All Rights Reserved.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
 
 package io.pravega.perf;
@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+
 import com.google.common.util.concurrent.RateLimiter;
 
 /**
@@ -220,29 +221,29 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         final EventsController eCnt = new EventsController(time, eventsPerSec);
         RateLimiter rateLimiter = RateLimiter.create(eventsPerSec);
         FlatBufferBuilder builder = new FlatBufferBuilder(1024);
+        try {
+            for (int i = 0; (time - startTime) < msToRun; i++) {
+                time = System.currentTimeMillis();
+                long start = System.nanoTime();
 
-        for (int i = 0; (time - startTime) < msToRun; i++) {
-            time = System.currentTimeMillis();
-            long start = System.nanoTime();
-
-            int headerOffset = Header.createHeader(builder, Type.C2C,
-                    builder.createString("dummy-targetStream"),
-                    builder.createString("dummy-routingKey"),
-                    time);
-            int byteArrayOffset  = builder.createByteVector(payload);
-            Event.startEvent(builder);
-            Event.addHeader(builder, headerOffset);
-            Event.addPayload(builder, byteArrayOffset);
-            int eventOffset = Event.endEvent(builder);
-            builder.finish(eventOffset);
-            long end = System.nanoTime();
-            byte[] data = builder.sizedByteArray();
-            long end2 = System.nanoTime();
-            log.info("serialize time {}", end2 - start);
-            log.info("serialize time without buffer copy {}", end - start);
-            try{
-                writeData(data);
-                builder.clear();
+                int headerOffset = Header.createHeader(builder, Type.C2C,
+                        builder.createString("dummy-targetStream"),
+                        builder.createString("dummy-routingKey"),
+                        time);
+                int byteArrayOffset = builder.createByteVector(payload);
+                Event.startEvent(builder);
+                Event.addHeader(builder, headerOffset);
+                Event.addPayload(builder, byteArrayOffset);
+                int eventOffset = Event.endEvent(builder);
+                builder.finish(eventOffset);
+                long end = System.nanoTime();
+                byte[] data = builder.sizedByteArray();
+                long end2 = System.nanoTime();
+                log.info("serialize time {}", end2 - start);
+                log.info("serialize time without buffer copy {}", end - start);
+                try {
+                    writeData(data);
+                    builder.clear();
                     /*
                     flush is required here for following reasons:
                     1. The writeData is called for End to End latency mode; hence make sure that data is sent.
@@ -250,13 +251,13 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
                        flushing moderates the kafka producer.
                     3. If the flush called after several iterations, then flush may take too much of time.
                     */
-                rateLimiter.acquire(1);
+                    rateLimiter.acquire(1);
                     //eCnt.control(i);
+                } catch (Exception e) {
+                    log.error("Exception", e);
                 }
-        }
-        catch (Exception e) {
-            log.error("write exception", e);
-        }catch (Throwable t){
+            }
+        } catch (Throwable t) {
             log.error("throwable", t);
         }
         try {
