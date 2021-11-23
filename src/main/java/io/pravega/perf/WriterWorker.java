@@ -241,12 +241,12 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
                 Event.addPayload(builder, byteArrayOffset);
                 int eventOffset = Event.endEvent(builder);
                 builder.finish(eventOffset);
-                long end = System.nanoTime();
+                // long end = System.nanoTime();
                 //byte[] data = builder.sizedByteArray();
                 ByteBuffer data2 = builder.dataBuffer();
                 long end2 = System.nanoTime();
                 log.info("serialize time {}", end2 - start);
-                log.info("serialize time without buffer copy {}", end - start);
+                //log.info("serialize time without buffer copy {}", end - start);
                 try {
                     writeData(data2);
                     builder.clear();
