@@ -258,13 +258,15 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         for (int i = 0; (time - startTime) < msToRun; i++) {
             time = System.currentTimeMillis();
             long start = System.nanoTime();
+
+            int headerOffset = Header.createHeader(builder, Type.C2C,
+                    builder.createString("dummy-targetStream"),
+                    builder.createString("dummy-routingKey"),
+                    time);
+            int byteArrayOffset  = builder.createByteVector(payload);
             Event.startEvent(builder);
-            Event.addHeader(builder,
-                    Header.createHeader(builder, Type.C2C,
-                            builder.createString("dummy-targetStream"),
-                            builder.createString("dummy-routingKey"),
-                            time));
-            Event.addPayload(builder, builder.createByteVector(payload));
+            Event.addHeader(builder, headerOffset);
+            Event.addPayload(builder, byteArrayOffset);
             int eventOffset = Event.endEvent(builder);
             builder.finish(eventOffset);
             long end = System.nanoTime();
