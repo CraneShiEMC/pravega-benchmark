@@ -155,6 +155,7 @@ public class PravegaStreamHandler {
             rdGrpConfig = ReaderGroupConfig.builder()
                     .stream(Stream.of(scope, stream)).build();
         }
+        log.info("create reader group: {} for stream: {}", rdGrpName, stream);
         readerGroupManager.createReaderGroup(rdGrpName, rdGrpConfig);
         final ReaderGroup rdGroup = readerGroupManager.getReaderGroup(rdGrpName);
         if (reset) {

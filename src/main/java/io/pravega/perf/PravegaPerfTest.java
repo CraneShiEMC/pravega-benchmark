@@ -492,6 +492,8 @@ public class PravegaPerfTest {
             }
             streamMap.put(streamName, newRdGrpName);
             factory = new ClientFactoryImpl(scopeName, controller, new SocketConnectionFactoryImpl(clientConfig));
+
+
             // create day stream
             log.info("-------------- starting create day stream: {} -------------------",writeStreamName);
             for(int i=0; i< 31; i++){
@@ -505,11 +507,6 @@ public class PravegaPerfTest {
                         EventWriterConfig.builder()
                                 .enableConnectionPooling(enableConnectionPooling)
                                 .build());
-                // if (recreate) {
-                //     streamHandle.recreate();
-                // } else {
-                //     streamHandle.scale();
-                // }
                 log.info("-------------- day stream {} created-------------------",newCreateStream);
                 producerList.add(newProducer);
 

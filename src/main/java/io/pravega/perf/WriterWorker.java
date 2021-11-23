@@ -230,10 +230,10 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         final EventsController eCnt = new EventsController(time, eventsPerSec);
         RateLimiter rateLimiter = RateLimiter.create(eventsPerSec);
         for (int i = 0; i < events; i++) {
-            byte[] bytes = timeBuffer.putLong(0, System.currentTimeMillis()).array();
-            System.arraycopy(bytes, 0, payload, 0, bytes.length);
+            //byte[] bytes = timeBuffer.putLong(0, System.currentTimeMillis()).array();
+            //System.arraycopy(bytes, 0, payload, 0, bytes.length);
             try {
-                writeData(payload);
+                writeData(generateEvent());
                 /*
                 flush is required here for following reasons:
                 1. The writeData is called for End to End latency mode; hence make sure that data is sent.

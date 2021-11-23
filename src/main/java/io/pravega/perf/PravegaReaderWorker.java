@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 public class PravegaReaderWorker extends ReaderWorker {
     private static Logger log = LoggerFactory.getLogger(PravegaReaderWorker.class);
 
-    private final EventStreamReader<byte[]> reader;
+    private final EventStreamReader<ByteBuffer> reader;
     private final Stream stream;
     private final ScheduledExecutorService watermarkExecutor = Executors.newScheduledThreadPool(1);
 
@@ -45,7 +45,7 @@ public class PravegaReaderWorker extends ReaderWorker {
 
         final String readerSt = Integer.toString(readerId);
         reader = factory.createReader(
-                readerSt, readergrp, new ByteArraySerializer(), ReaderConfig.builder().build());
+                readerSt, readergrp, new ByteBufferSerializer(), ReaderConfig.builder().build());
         this.stream = stream;
 
         if (readWatermarkPeriodMillis > 0) {
@@ -55,7 +55,7 @@ public class PravegaReaderWorker extends ReaderWorker {
     }
 
     @Override
-    public byte[] readData() {
+    public ByteBuffer readData() {
         try {
             return reader.readNextEvent(timeout).getEvent();
         } catch (ReinitializationRequiredException e) {
