@@ -175,7 +175,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                             stats.recordTime(time, System.currentTimeMillis(), ret.remaining());
                         }
                     }catch (Throwable t){
-                        log.error("fail to get event");
+                        log.error("fail to get event",t);
                     }
 
                     // log.info("receive event {}", ret);
