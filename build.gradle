@@ -59,7 +59,7 @@ startScripts {
 }
 
 flatbuffers {
-    flatcPath = 'flatc'
+    flatcPath = 'C:\\Users\\lil58\\Downloads\\Windows.flatc.binary\\flatc.exe'
     language = 'java'
 }
 

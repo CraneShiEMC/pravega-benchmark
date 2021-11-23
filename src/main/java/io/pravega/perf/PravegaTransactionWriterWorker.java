@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.GuardedBy;
+import java.nio.ByteBuffer;
 import java.util.UUID;
 
 public class PravegaTransactionWriterWorker extends WriterWorker {
@@ -36,7 +37,7 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
 
     // If null, a transaction has not been started.
     @GuardedBy("this")
-    private Transaction<byte[]> transaction;
+    private Transaction<ByteBuffer> transaction;
 
     /**
      *
@@ -76,13 +77,13 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
      * @return the current time
      */
     @Override
-    public long recordWrite(byte[] data, TriConsumer record) {
+    public long recordWrite(ByteBuffer data, TriConsumer record) {
         long time = 0;
         try {
             synchronized (this) {
                 time = System.currentTimeMillis();
                 if (transaction == null) {
-                    transaction = producer.beginTxn();
+                    //transaction = producer.beginTxn();
                 }
                 transaction.writeEvent(data);
                 record.accept(time, System.currentTimeMillis(), messageSize);
@@ -109,7 +110,7 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
      * @param data data to write
      */
     @Override
-    public void writeData(byte[] data) {
+    public void writeData(ByteBuffer data) {
         recordWrite(data, noOpTriConsumer);
     }
 
