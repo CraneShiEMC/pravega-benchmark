@@ -85,7 +85,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     /**
      * read the data.
      */
-    public abstract ByteBuffer readData();
+    public abstract byte[] readData();
 
     /**
      * close the consumer/reader.
@@ -105,14 +105,14 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
 
 
     public void EventsReader() throws IOException {
-        ByteBuffer ret = null;
+        byte[] ret = null;
         try {
             int i = 0;
             while (i < events) {
                 final long startTime = System.currentTimeMillis();
                 ret = readData();
                 if (ret != null) {
-                    stats.recordTime(startTime, System.currentTimeMillis(), ret.remaining());
+                    stats.recordTime(startTime, System.currentTimeMillis(), ret.length);
                     i++;
                 }
             }
@@ -124,17 +124,17 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
 
     public void EventsReaderRW() throws IOException {
         final ByteBuffer timeBuffer = ByteBuffer.allocate(TIME_HEADER_SIZE);
-        ByteBuffer ret = null;
+        byte[] ret = null;
         try {
             int i = 0;
             while (i < events) {
                 ret = readData();
                 if (ret != null) {
                     final long endTime = System.currentTimeMillis();
-//                    timeBuffer.clear();
-//                    timeBuffer.put(ret, 0, TIME_HEADER_SIZE);
-                    final long start = ret.getLong(0);
-                    stats.recordTime(start, endTime, ret.remaining());
+                    timeBuffer.clear();
+                    timeBuffer.put(ret, 0, TIME_HEADER_SIZE);
+                    final long start = timeBuffer.getLong(0);
+                    stats.recordTime(start, endTime, ret.length);
                     i++;
                 }
             }
@@ -147,7 +147,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     public void EventsTimeReader() throws IOException {
         log.info("EventsTimeReader: Running");
         final long msToRun = secondsToRun * MS_PER_SEC;
-        ByteBuffer ret = null;
+        byte[] ret = null;
         long time = System.currentTimeMillis();
         ArrayList<ByteBuffer> eventList = new ArrayList<>();
         try {
@@ -156,7 +156,8 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 ret = readData();
                 if (ret != null) {
                     try{
-                        Event event = Event.getRootAsEvent(ret);
+                        java.nio.ByteBuffer buf = java.nio.ByteBuffer.wrap(ret);
+                        Event event = Event.getRootAsEvent(buf);
                         final long  start = event.header().executionTime();
                         final String  routingKey = event.header().routingKey();
                         final String  targetStream = event.header().targetStream();
@@ -165,14 +166,14 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                             if(eventList.size()>=batchSize){
                                 batchWrite(eventList);
                                 eventList.clear();
-                                stats.recordTime(time, System.currentTimeMillis(), ret.remaining()*batchSize);
+                                stats.recordTime(time, System.currentTimeMillis(), ret.length*batchSize);
                             }else{
                                 eventList.add(payload);
                             }
                         }
                         else{
-                            writeEvent(ret);
-                            stats.recordTime(time, System.currentTimeMillis(), ret.remaining());
+                            writeEvent(payload);
+                            stats.recordTime(time, System.currentTimeMillis(), ret.length);
                         }
                     }catch (Throwable t){
                         log.error("fail to get event",t);
@@ -194,7 +195,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
 
     public void EventsTimeReaderRW() throws IOException {
         final long msToRun = secondsToRun * MS_PER_SEC;
-        ByteBuffer ret = null;
+        byte[] ret = null;
         long time = System.currentTimeMillis();
         try {
             while ((time - startTime) < msToRun) {
@@ -203,14 +204,14 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                     time = System.currentTimeMillis();
                     if (ret != null) {
                         long startDeserialize = System.nanoTime();
-                        //java.nio.ByteBuffer buf = java.nio.ByteBuffer.wrap(ret);
+                        java.nio.ByteBuffer buf = java.nio.ByteBuffer.wrap(ret);
                         //long startDeserialize2 = System.nanoTime();
-                        Event event = Event.getRootAsEvent(ret);
+                        Event event = Event.getRootAsEvent(buf);
                         final long  start = event.header().executionTime();
                         final String  routingKey = event.header().routingKey();
                         final String  targetStream = event.header().targetStream();
                         long endDeserialize = System.nanoTime();
-                        stats.recordTime(start, time, ret.remaining());
+                        stats.recordTime(start, time, ret.length);
                         log.info("execution time {}", start);
                         log.info("routingKey {}", routingKey);
                         log.info("targetStream {}", targetStream);
