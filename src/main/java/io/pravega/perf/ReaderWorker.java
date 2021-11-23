@@ -157,35 +157,36 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 time = System.currentTimeMillis();
                 ret = readData();
                 time = System.currentTimeMillis();
-                log.info("event received {}",ret.asReadOnlyBuffer());
+                log.info("event received {}",ret.toString());
                 if (ret != null) {
                     try{
-                    long startDeserialize = System.nanoTime();
-                    //java.nio.ByteBuffer buf = java.nio.ByteBuffer.wrap(ret);
-                    //long startDeserialize2 = System.nanoTime();
-                    Event event = Event.getRootAsEvent(ret);
-                    if(event != null){
-                        final long  start = event.header().executionTime();
-                        final String  routingKey = event.header().routingKey();
-                        final String  targetStream = event.header().targetStream();
-                        long endDeserialize = System.nanoTime();
-                        final ByteBuffer payload = event.payloadAsByteBuffer();
-                        if(enableBatch){
-                            if(eventList.size()>=batchSize){
-                                batchWrite(eventList);
-                                eventList.clear();
-                                stats.recordTime(time, System.currentTimeMillis(), ret.remaining()*batchSize);
-                            }else{
-                                eventList.add(payload);
+                        long startDeserialize = System.nanoTime();
+                        //java.nio.ByteBuffer buf = java.nio.ByteBuffer.wrap(ret);
+                        //long startDeserialize2 = System.nanoTime();
+                        Event event = Event.getRootAsEvent(ret);
+                        if(event != null){
+                            final long  start = event.header().executionTime();
+                            final String  routingKey = event.header().routingKey();
+                            final String  targetStream = event.header().targetStream();
+                            long endDeserialize = System.nanoTime();
+                            final ByteBuffer payload = event.payloadAsByteBuffer();
+                            if(enableBatch){
+                                if(eventList.size()>=batchSize){
+                                    batchWrite(eventList);
+                                    eventList.clear();
+                                    stats.recordTime(time, System.currentTimeMillis(), ret.remaining()*batchSize);
+                                }else{
+                                    eventList.add(payload);
+                                }
+                            }
+                            else{
+                                writeEvent(payload);
+                                stats.recordTime(time, System.currentTimeMillis(), ret.remaining());
                             }
                         }
-                        else{
-                            writeEvent(payload);
-                            stats.recordTime(time, System.currentTimeMillis(), ret.remaining());
-                        }
-                    }
                     }catch (Throwable t){
                         log.error("fail to get event",t);
+                        break;
                     }
 
                     // log.info("receive event {}", ret);

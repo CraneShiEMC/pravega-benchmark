@@ -496,21 +496,21 @@ public class PravegaPerfTest {
 
             // create day stream
             log.info("-------------- starting create day stream: {} -------------------",writeStreamName);
-            for(int i=0; i< 31; i++){
-                String newCreateStream =  writeStreamName + (i+1);
-                newRdGrpName = streamName + "RG";
-                streamHandle = new PravegaStreamHandler(scopeName, newCreateStream, newRdGrpName, controllerUri, segmentCount,
-                        segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
-                streamHandle.create();
-                EventStreamWriter<ByteBuffer> newProducer = factory.createEventWriter(newCreateStream,
-                        new ByteBufferSerializer(),
-                        EventWriterConfig.builder()
-                                .enableConnectionPooling(enableConnectionPooling)
-                                .build());
-                log.info("-------------- day stream {} created-------------------",newCreateStream);
-                producerList.add(newProducer);
-
-            }
+//            for(int i=0; i< 31; i++){
+//                String newCreateStream =  writeStreamName + (i+1);
+//                newRdGrpName = streamName + "RG";
+//                streamHandle = new PravegaStreamHandler(scopeName, newCreateStream, newRdGrpName, controllerUri, segmentCount,
+//                        segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
+//                streamHandle.create();
+//                EventStreamWriter<ByteBuffer> newProducer = factory.createEventWriter(newCreateStream,
+//                        new ByteBufferSerializer(),
+//                        EventWriterConfig.builder()
+//                                .enableConnectionPooling(enableConnectionPooling)
+//                                .build());
+//                log.info("-------------- day stream {} created-------------------",newCreateStream);
+//                producerList.add(newProducer);
+//
+//            }
         }
 
         private AtomicLong[] getAtomicNum() {
