@@ -161,10 +161,11 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                     //java.nio.ByteBuffer buf = java.nio.ByteBuffer.wrap(ret);
                     //long startDeserialize2 = System.nanoTime();
                     Event event = Event.getRootAsEvent(ret);
-                    final long  start = event.header().executionTime();
-                    final String  routingKey = event.header().routingKey();
-                    final String  targetStream = event.header().targetStream();
-                    long endDeserialize = System.nanoTime();
+                    if(event != null){
+                        final long  start = event.header().executionTime();
+                        final String  routingKey = event.header().routingKey();
+                        final String  targetStream = event.header().targetStream();
+                        long endDeserialize = System.nanoTime();
                         final ByteBuffer payload = event.payloadAsByteBuffer();
                         if(enableBatch){
                             if(eventList.size()>=batchSize){
@@ -179,6 +180,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                             writeEvent(payload);
                             stats.recordTime(time, System.currentTimeMillis(), ret.remaining());
                         }
+                    }
                     }catch (Throwable t){
                         log.error("fail to get event",t);
                     }
@@ -190,7 +192,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
             }
         }
         catch(Exception e){
-            log.error("fail to write event");
+            log.error("fail to write event",e);
         }finally {
             close();
         }
