@@ -161,6 +161,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                     //java.nio.ByteBuffer buf = java.nio.ByteBuffer.wrap(ret);
                     //long startDeserialize2 = System.nanoTime();
                     Event event = Event.getRootAsEvent(ret);
+                    log.info("event: {}",event.toString());
                     if(event != null){
                         final long  start = event.header().executionTime();
                         final String  routingKey = event.header().routingKey();
