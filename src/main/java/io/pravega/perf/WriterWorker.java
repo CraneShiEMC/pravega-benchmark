@@ -48,6 +48,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
     final private ByteBuffer payload;
     final private Boolean isBatch;
     final private int batchSize;
+    final private FlatBufferBuilder builder = new FlatBufferBuilder(1024);
 
     WriterWorker(int sensorId, int events, int EventsPerFlush, int secondsToRun,
                  boolean isRandomKey, int messageSize, long start,
@@ -163,10 +164,10 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         for (int i = 0; i < events; i++) {
             //byte[] data = createPayload();
             if(isBatch){
-                recordWrite(createPayload(eventsPerSec*batchSize), stats::recordTime);
+                recordWrite(generateEvent(), stats::recordTime);
             }
             else{
-                recordWrite(payload, stats::recordTime);
+                recordWrite(generateEvent(), stats::recordTime);
             }
         }
         flush();
@@ -194,10 +195,10 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         while ((time - startTime) < msToRun) {
             //byte[] data = createPayload();
             if(isBatch){
-                recordWrite(createPayload(eventsPerSec*batchSize), stats::recordTime);
+                recordWrite(generateEvent(), stats::recordTime);
             }
             else{
-                recordWrite(payload, stats::recordTime);
+                recordWrite(generateEvent(), stats::recordTime);
             }
         }
         flush();
@@ -211,12 +212,10 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         long time = System.currentTimeMillis();
         final EventsController eCnt = new EventsController(time, eventsPerSec);
         long msElapsed = time - startTime;
-//        int cnt = 0;
         while (msElapsed < msToRun) {
             for (int i = 0; (msElapsed < msToRun) && (i < EventsPerFlush); i++) {
-                time = recordWrite(payload, stats::recordTime);
+                time = recordWrite(generateEvent(), stats::recordTime);
                 rateLimiter.acquire(1);
-//                eCnt.control(cnt++, time);
                 msElapsed = time - startTime;
             }
             flush();
@@ -255,37 +254,32 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         }
     }
 
-
+    private ByteBuffer generateEvent(){
+        long time = System.currentTimeMillis();
+        int headerOffset = Header.createHeader(builder, Type.C2C,
+                builder.createString("dummy-targetStream"),
+                builder.createString("dummy-routingKey"),
+                time);
+        int byteArrayOffset = builder.createByteVector(payload);
+        Event.startEvent(builder);
+        Event.addHeader(builder, headerOffset);
+        Event.addPayload(builder, byteArrayOffset);
+        int eventOffset = Event.endEvent(builder);
+        builder.finish(eventOffset);
+        ByteBuffer data = builder.dataBuffer();
+        return data;
+    }
     private void EventsWriterTimeRW() throws InterruptedException, IOException {
         log.info("EventsWriterTimeRW: Running");
         final long msToRun = secondsToRun * MS_PER_SEC;
         long time = System.currentTimeMillis();
         final EventsController eCnt = new EventsController(time, eventsPerSec);
         RateLimiter rateLimiter = RateLimiter.create(eventsPerSec);
-        FlatBufferBuilder builder = new FlatBufferBuilder(1024);
         try {
             for (int i = 0; (time - startTime) < msToRun; i++) {
-                time = System.currentTimeMillis();
-                long start = System.nanoTime();
-
-                int headerOffset = Header.createHeader(builder, Type.C2C,
-                        builder.createString("dummy-targetStream"),
-                        builder.createString("dummy-routingKey"),
-                        time);
-                int byteArrayOffset = builder.createByteVector(payload);
-                Event.startEvent(builder);
-                Event.addHeader(builder, headerOffset);
-                Event.addPayload(builder, byteArrayOffset);
-                int eventOffset = Event.endEvent(builder);
-                builder.finish(eventOffset);
-                // long end = System.nanoTime();
-                //byte[] data = builder.sizedByteArray();
-                ByteBuffer data2 = builder.dataBuffer();
-                long end2 = System.nanoTime();
-                log.info("serialize time {}", end2 - start);
-                //log.info("serialize time without buffer copy {}", end - start);
+                ByteBuffer data = generateEvent();
                 try {
-                    writeData(data2);
+                    writeData(data);
                     builder.clear();
                     /*
                     flush is required here for following reasons:
