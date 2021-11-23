@@ -24,6 +24,7 @@ import java.nio.ByteBuffer;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.common.util.concurrent.RateLimiter;
 
@@ -34,15 +35,24 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
     private static Logger log = LoggerFactory.getLogger(WriterWorker.class);
 
     final private static int MS_PER_SEC = 1000;
+    final private int ROUTING_KEY_NUM = 10;
+    final private Random random = new Random();
+    final private String[] routingKeyArray;
     final private Performance perf;
-    final private ByteBuffer payload;
+    //    final private byte[] payload;
     final private int eventsPerSec;
     final private int EventsPerFlush;
     final private boolean writeAndRead;
+    final private AtomicLong[] seqNum;
+    final private Boolean isEnableRoutingKey;
+    final private ByteBuffer payload;
+    final private Boolean isBatch;
+    final private int batchSize;
 
     WriterWorker(int sensorId, int events, int EventsPerFlush, int secondsToRun,
                  boolean isRandomKey, int messageSize, long start,
-                 PerfStats stats, String streamName, int eventsPerSec, boolean writeAndRead) {
+                 PerfStats stats, String streamName, int eventsPerSec, boolean writeAndRead, AtomicLong[] seqNum,
+                 Boolean isEnableRoutingKey,Boolean isBatch, int batchSize) {
 
         super(sensorId, events, secondsToRun, messageSize, start, stats, streamName, 0);
         this.eventsPerSec = eventsPerSec;
@@ -50,6 +60,19 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         this.writeAndRead = writeAndRead;
         this.payload = createPayload(messageSize);
         this.perf = createBenchmark();
+        this.seqNum = seqNum;
+        this.isEnableRoutingKey = isEnableRoutingKey;
+        this.routingKeyArray = getRoutingKeyArray();
+        this.batchSize = batchSize;
+        this.isBatch = isBatch;
+    }
+
+    private String[] getRoutingKeyArray() {
+        String[] routingKeys = new String[ROUTING_KEY_NUM];
+        for (int i = 0; i < ROUTING_KEY_NUM; i++) {
+            routingKeys[i] = "routingKey" + i;
+        }
+        return routingKeys;
     }
 
 
@@ -138,7 +161,13 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
     private void EventsWriter() throws InterruptedException, IOException {
         log.info("EventsWriter: Running");
         for (int i = 0; i < events; i++) {
-            recordWrite(payload, stats::recordTime);
+            //byte[] data = createPayload();
+            if(isBatch){
+                recordWrite(createPayload(eventsPerSec*batchSize), stats::recordTime);
+            }
+            else{
+                recordWrite(payload, stats::recordTime);
+            }
         }
         flush();
     }
@@ -163,7 +192,13 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         final long msToRun = secondsToRun * MS_PER_SEC;
         long time = System.currentTimeMillis();
         while ((time - startTime) < msToRun) {
-            time = recordWrite(payload, stats::recordTime);
+            //byte[] data = createPayload();
+            if(isBatch){
+                recordWrite(createPayload(eventsPerSec*batchSize), stats::recordTime);
+            }
+            else{
+                recordWrite(payload, stats::recordTime);
+            }
         }
         flush();
     }
@@ -194,6 +229,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         final ByteBuffer timeBuffer = ByteBuffer.allocate(TIME_HEADER_SIZE);
         final long time = System.currentTimeMillis();
         final EventsController eCnt = new EventsController(time, eventsPerSec);
+        RateLimiter rateLimiter = RateLimiter.create(eventsPerSec);
         for (int i = 0; i < events; i++) {
             byte[] bytes = timeBuffer.putLong(0, System.currentTimeMillis()).array();
             System.arraycopy(bytes, 0, payload, 0, bytes.length);
@@ -206,10 +242,11 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
                    flushing moderates the kafka producer.
                 3. If the flush called after several iterations, then flush may take too much of time.
                 */
-                eCnt.control(i);
+                rateLimiter.acquire(1);
             } catch (Exception e) {
                 log.error("write exception", e);
             }
+            flush();
         }
         try {
             flush();

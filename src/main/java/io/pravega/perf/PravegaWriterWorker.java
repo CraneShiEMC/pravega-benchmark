@@ -11,7 +11,11 @@
 package io.pravega.perf;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicLong;
 
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.stream.EventStreamWriter;
@@ -31,10 +35,14 @@ public class PravegaWriterWorker extends WriterWorker {
     final EventStreamWriter<ByteBuffer> producer;
 
     private final long writeWatermarkPeriodMillis;
-
+    final private Boolean isEnableRoutingKey;
+    final private Boolean isBatch;
+    final private int batchSize;
+    private RateLimiter rateLimiter;
+    final private Random random = new Random();
     // No guard is required for nextNoteTime because it is only used by one thread per instance.
     private long nextNoteTime = System.currentTimeMillis();
-    private RateLimiter rateLimiter;
+    //private RateLimiter rateLimiter;
 
     /**
      * Construct a PravegaWriterWorker.
@@ -47,11 +55,12 @@ public class PravegaWriterWorker extends WriterWorker {
                         boolean isRandomKey, int messageSize, long start,
                         PerfStats stats, String streamName, int eventsPerSec,
                         boolean writeAndRead, EventStreamClientFactory factory,
-                        boolean enableConnectionPooling, long writeWatermarkPeriodMillis) {
+                        boolean enableConnectionPooling, long writeWatermarkPeriodMillis, AtomicLong[] seqNum,
+                        Boolean isEnableRoutingKey, Boolean isBatch, int batchSize) {
 
         super(sensorId, events, EventsPerFlush,
                 secondsToRun, isRandomKey, messageSize, start,
-                stats, streamName, eventsPerSec, writeAndRead);
+                stats, streamName, eventsPerSec, writeAndRead, seqNum, isEnableRoutingKey,isBatch,batchSize);
         log.info("PravegaWriterWorker enableConnectionPooling : {}", enableConnectionPooling);
         this.producer = factory.createEventWriter(streamName,
                 new ByteBufferSerializer(),
@@ -60,17 +69,30 @@ public class PravegaWriterWorker extends WriterWorker {
                         .enableConnectionPooling(true)
                         .build());
         this.writeWatermarkPeriodMillis = writeWatermarkPeriodMillis;
-        this.rateLimiter = RateLimiter.create(eventsPerSec);
+        this.isEnableRoutingKey = isEnableRoutingKey;
+        this.isBatch = isBatch;
+        this.batchSize = batchSize;
+        //this.rateLimiter = RateLimiter.create(eventsPerSec);
+        log.info("events per producer {}, events per seconde {}", events, eventsPerSec);
     }
 
     @Override
     public long recordWrite(ByteBuffer data, TriConsumer record) {
-        CompletableFuture ret;
+        CompletableFuture<Void> ret;
         final long time = System.currentTimeMillis();
-        ret = producer.writeEvent(data);
-        ret.thenAccept(d -> {
-            record.accept(time, System.currentTimeMillis(), data.remaining());
-        });
+        ret = writeEvent(producer, data);
+        if(isBatch){
+            ret.thenAccept(d -> {
+                record.accept(time, System.currentTimeMillis(), data.remaining()*batchSize);
+                //log.info("[Batch write] single event size: {}, batch size: {}", data.length, batchSize);
+            });
+        }
+        else{
+            ret.thenAccept(d -> {
+                record.accept(time, System.currentTimeMillis(), data.remaining());
+                log.info("Event write: {}", (data));
+            });
+        }
         noteTimePeriodically();
         return time;
     }
@@ -82,7 +104,9 @@ public class PravegaWriterWorker extends WriterWorker {
 
     @Override
     public void writeData(ByteBuffer data) {
-        producer.writeEvent(data);
+        writeEvent(producer, data).thenAccept(d -> {
+            //log.info("Event write: {}", new String(data));
+        });
         noteTimePeriodically();
     }
 
@@ -95,6 +119,29 @@ public class PravegaWriterWorker extends WriterWorker {
                 nextNoteTime += writeWatermarkPeriodMillis;
             }
         }
+    }
+
+    private CompletableFuture<Void> writeEvent(EventStreamWriter<ByteBuffer> producer, ByteBuffer data) {
+        CompletableFuture<Void> ret;
+        if(isBatch){
+            int number = random.nextInt(128);
+            List<ByteBuffer> eventList = new ArrayList<>();
+            for (int i = 0; i < batchSize; i++) {
+                eventList.add(data);
+            }
+            ret = producer.writeEvents(Integer.toString(number), eventList);
+            //log.info("write batch action, event size {}, routing key {}", eventList.size(), number);
+            return ret;
+        }
+        else if(isEnableRoutingKey) {
+            String dataString = new String(String.valueOf(data));
+            String routingKey = dataString.split("-")[1];
+            ret = producer.writeEvent(routingKey, data);
+
+        } else {
+            ret = producer.writeEvent(data);
+        }
+        return ret;
     }
 
     @Override
