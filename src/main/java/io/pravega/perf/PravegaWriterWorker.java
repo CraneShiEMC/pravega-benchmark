@@ -60,7 +60,7 @@ public class PravegaWriterWorker extends WriterWorker {
                         .enableConnectionPooling(true)
                         .build());
         this.writeWatermarkPeriodMillis = writeWatermarkPeriodMillis;
-        this.rateLimiter = RateLimiter.create(eventsPerSec);
+        //this.rateLimiter = RateLimiter.create(eventsPerSec);
     }
 
     @Override
