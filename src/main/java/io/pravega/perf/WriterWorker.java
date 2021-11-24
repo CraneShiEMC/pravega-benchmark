@@ -268,6 +268,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         long time = System.currentTimeMillis();
         final EventsController eCnt = new EventsController(time, eventsPerSec);
         RateLimiter rateLimiter = RateLimiter.create(eventsPerSec);
+        FlatBufferBuilder builder = new FlatBufferBuilder(1024);
         try {
             for (int i = 0; (time - startTime) < msToRun; i++) {
 

@@ -45,7 +45,6 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     private AtomicInteger count = new AtomicInteger(0);
     final private boolean enableBatch;
     private int readDelay;
-    final private FlatBufferBuilder builder = new FlatBufferBuilder(1024);
 
     ReaderWorker(int readerId, int events, int secondsToRun, long start,
                  PerfStats stats, String readerGrp, int timeout, boolean writeAndRead, int readDelay,int batchSize, List<EventStreamWriter<byte[]>> producerList, boolean enableBatch) {
@@ -67,7 +66,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         //log.info("writeEvent start time {}",System.nanoTime());
         //producerList.get(count.incrementAndGet() % 30).writeEvent(data);
        // producer.writeEvent(data);
-       producerList.get(count.incrementAndGet() % 30).writeEvent(data);
+       producerList.get(0).writeEvent(data);
         //log.info("writeEvent end time {}",System.nanoTime());
         // execute time: 18,614 us
     }
@@ -168,6 +167,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         byte[] ret = null;
         long time = System.currentTimeMillis();
         ArrayList<byte[]> eventList = new ArrayList<>(batchSize);
+        FlatBufferBuilder builder = new FlatBufferBuilder(1024);
         try {
             while ((time - startTime) < msToRun) {
                 time = System.currentTimeMillis();
@@ -199,7 +199,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                         builder.finish(eventOffset);
                         byte[] newEvent =  builder.sizedByteArray();
                         long newEndTime = System.currentTimeMillis();
-                        log.info("deserialize time {}", newEndTime - newStartTime);
+                        log.info("serialize time {}", newEndTime - newStartTime);
 
                         if(enableBatch){
                             if(eventList.size()>=batchSize){
