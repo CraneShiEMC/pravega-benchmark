@@ -98,7 +98,7 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
                     transaction.writeEvent(data);
                 }
                 transaction.flush();
-                log.info("Event write: {}", String.valueOf(data));
+                //log.info("Event write: {}", String.valueOf(data));
                 record.accept(time, System.currentTimeMillis(), messageSize);
                 eventCount++;
                 if (eventCount >= transactionsPerCommit) {
