@@ -145,23 +145,26 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         try {
             while ((time - startTime) < msToRun) {
                 try {
+                    long start = System.nanoTime();
                     ret = readData();
                     time = System.currentTimeMillis();
+                    long end = System.nanoTime();
+                    log.info("received event time: {}", end-start);
                     if (ret != null) {
-                        long startDeserialize = System.nanoTime();
-                        java.nio.ByteBuffer buf = java.nio.ByteBuffer.wrap(ret);
-                        long startDeserialize2 = System.nanoTime();
-                        Event event = Event.getRootAsEvent(buf);
-                        final long  start = event.header().executionTime();
-                        final String  routingKey = event.header().routingKey();
-                        final String  targetStream = event.header().targetStream();
-                        long endDeserialize = System.nanoTime();
-                        stats.recordTime(start, time, ret.length);
-                        log.info("execution time {}", start);
-                        log.info("routingKey {}", routingKey);
-                        log.info("targetStream {}", targetStream);
-                        log.info("deserialize time {}", endDeserialize - startDeserialize);
-                        log.info("deserialize time without buffer copy {}", endDeserialize - startDeserialize2);
+//                        long startDeserialize = System.nanoTime();
+//                        java.nio.ByteBuffer buf = java.nio.ByteBuffer.wrap(ret);
+//                        long startDeserialize2 = System.nanoTime();
+//                        Event event = Event.getRootAsEvent(buf);
+//                        final long  start = event.header().executionTime();
+//                        final String  routingKey = event.header().routingKey();
+//                        final String  targetStream = event.header().targetStream();
+//                        long endDeserialize = System.nanoTime();
+//                        stats.recordTime(start, time, ret.length);
+//                        log.info("execution time {}", start);
+//                        log.info("routingKey {}", routingKey);
+//                        log.info("targetStream {}", targetStream);
+//                        log.info("deserialize time {}", endDeserialize - startDeserialize);
+//                        log.info("deserialize time without buffer copy {}", endDeserialize - startDeserialize2);
                     }
                 } catch (Exception e) {
                     log.error("read exception", e);
