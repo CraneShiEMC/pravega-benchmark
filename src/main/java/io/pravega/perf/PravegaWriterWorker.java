@@ -32,7 +32,7 @@ public class PravegaWriterWorker extends WriterWorker {
 
     // No guard is required for nextNoteTime because it is only used by one thread per instance.
     private long nextNoteTime = System.currentTimeMillis();
-    private RateLimiter rateLimiter;
+    //private RateLimiter rateLimiter;
 
     /**
      * Construct a PravegaWriterWorker.
@@ -58,7 +58,7 @@ public class PravegaWriterWorker extends WriterWorker {
                         .enableConnectionPooling(true)
                         .build());
         this.writeWatermarkPeriodMillis = writeWatermarkPeriodMillis;
-        this.rateLimiter = RateLimiter.create(eventsPerSec);
+        //this.rateLimiter = RateLimiter.create(eventsPerSec);
     }
 
     @Override
