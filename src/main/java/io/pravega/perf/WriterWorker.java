@@ -162,6 +162,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
             else{
                 recordWrite(generateEvent(), stats::recordTime);
             }
+            builder.clear();
         }
         flush();
     }
@@ -177,6 +178,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
                 eCnt.control(cnt++, recordWrite(generateEvent(), stats::recordTime));
             }
             flush();
+            builder.clear();
         }
     }
 
@@ -193,6 +195,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
             else{
                 recordWrite(generateEvent(), stats::recordTime);
             }
+            builder.clear();
         }
         flush();
     }
@@ -212,6 +215,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
                 rateLimiter.acquire(1);
 //                eCnt.control(cnt++, time);
                 msElapsed = time - startTime;
+                builder.clear();
             }
             flush();
         }
@@ -228,6 +232,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
             System.arraycopy(bytes, 0, payload, 0, bytes.length);
             try {
                 writeData(generateEvent());
+                builder.clear();
                 /*
                 flush is required here for following reasons:
                 1. The writeData is called for End to End latency mode; hence make sure that data is sent.
