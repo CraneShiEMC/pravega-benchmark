@@ -118,6 +118,7 @@ public class PravegaPerfTest {
         options.addOption("help", false, "Help message");
         options.addOption("enableBatch", true, "whether enable batch write");
         options.addOption("batchSize", true, "batch write size");
+        options.addOption("rwMode",false, "read from month write to day");
         parser = new DefaultParser();
         try {
             commandline = parser.parse(options, args);
@@ -247,6 +248,7 @@ public class PravegaPerfTest {
         final int batchSize;
         final String readStreamName;
         final String writeStreamName;
+        final Boolean rwMode;
         protected List<EventStreamWriter<ByteBuffer>> producerList;
 
         Test(long startTime, CommandLine commandline) throws IllegalArgumentException {
@@ -262,6 +264,7 @@ public class PravegaPerfTest {
             batchSize = parseIntOption(commandline, "batchSize", 100);
             readStreamName = parseStringOption(commandline, "readStreamName", "month-stream");
             writeStreamName = parseStringOption(commandline, "writeStreamName", "day-stream");
+            rwMode = parseBooleanOption(commandline,"rwMode", false);
             if (commandline.hasOption("flush")) {
                 int flushEvents = Integer.parseInt(commandline.getOptionValue("flush"));
                 if (flushEvents > 0) {
@@ -489,21 +492,22 @@ public class PravegaPerfTest {
                     readerGroups.add(readerGroup);
                     log.info("-------------- Create reader group {} -------------------", newRdGrpName);
                 }
-                streamMap.put(streamName, newRdGrpName);
+            streamMap.put(streamName, newRdGrpName);
             factory = new ClientFactoryImpl(scopeName, controller, new SocketConnectionFactoryImpl(clientConfig));
             // create day stream
             log.info("-------------- starting create day stream: {} -------------------",writeStreamName);
-            for(int i=0; i< 31; i++){
-                String newCreateStream =  writeStreamName + (i+1);
-                newRdGrpName = streamName + "RG";
-                streamHandle = new PravegaStreamHandler(scopeName, newCreateStream, newRdGrpName, controllerUri, segmentCount,
-                        segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
-                streamHandle.create();
+            if(rwMode){
+                for(int i=0; i< 31; i++){
+                    String newCreateStream =  writeStreamName + (i+1);
+                    newRdGrpName = streamName + "RG";
+                    streamHandle = new PravegaStreamHandler(scopeName, newCreateStream, newRdGrpName, controllerUri, segmentCount,
+                            segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
+                    streamHandle.create();
                     EventStreamWriter<ByteBuffer> newProducer = factory.createEventWriter(newCreateStream,
-                    new ByteBufferSerializer(),
-                    EventWriterConfig.builder()
-                        .enableConnectionPooling(enableConnectionPooling)
-                        .build());
+                            new ByteBufferSerializer(),
+                            EventWriterConfig.builder()
+                                    .enableConnectionPooling(enableConnectionPooling)
+                                    .build());
                     // if (recreate) {
                     //     streamHandle.recreate();
                     // } else {
@@ -511,7 +515,8 @@ public class PravegaPerfTest {
                     // }
                     log.info("-------------- day stream {} created-------------------",newCreateStream);
                     producerList.add(newProducer);
-                
+
+                }
             }
         }
 
