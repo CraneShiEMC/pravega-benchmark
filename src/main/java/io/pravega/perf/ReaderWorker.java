@@ -170,6 +170,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         FlatBufferBuilder builder = new FlatBufferBuilder(1024);
         try {
             while ((time - startTime) < msToRun) {
+                long beginReadDataTime = System.nanoTime();
                 time = System.currentTimeMillis();
                 long startReadEvent = System.nanoTime();
                 ret = readData();
@@ -220,6 +221,8 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                             stats.recordTime(time, System.currentTimeMillis(), ret.length);
                         }
                     builder.clear();
+                    long endReadDataTime = System.nanoTime();
+                    log.info("whole read event time {}",endReadDataTime-beginReadDataTime);
                 }
             }
         }
