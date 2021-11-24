@@ -213,7 +213,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                             }
                         }
                         else{
-                            writeEvent(ret);
+                            writeEvent(newEvent);
                             stats.recordTime(time, System.currentTimeMillis(), ret.length);
                         }
                     builder.clear();
