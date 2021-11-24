@@ -186,7 +186,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                         long end = System.nanoTime();
                         log.info("deserialize time {}", end - start);
 
-                        long newStartTime = System.currentTimeMillis();
+                        long newStartTime = System.nanoTime();
                         int headerOffset = Header.createHeader(builder, Type.C2C,
                             builder.createString(targetStream),
                             builder.createString(routingKey),
@@ -198,7 +198,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                         int eventOffset = Event.endEvent(builder);
                         builder.finish(eventOffset);
                         byte[] newEvent =  builder.sizedByteArray();
-                        long newEndTime = System.currentTimeMillis();
+                        long newEndTime = System.nanoTime();
                         log.info("serialize time {}", newEndTime - newStartTime);
                         log.info("event length {}",newEvent.length);
                         if(enableBatch){
@@ -216,6 +216,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                             writeEvent(ret);
                             stats.recordTime(time, System.currentTimeMillis(), ret.length);
                         }
+                    builder.clear();
                 }
             }
         }
