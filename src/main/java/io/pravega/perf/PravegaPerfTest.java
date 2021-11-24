@@ -496,6 +496,7 @@ public class PravegaPerfTest {
             factory = new ClientFactoryImpl(scopeName, controller, new SocketConnectionFactoryImpl(clientConfig));
             // create day stream
             log.info("-------------- starting create day stream: {} -------------------",writeStreamName);
+            log.info("rwMode {}",rwMode);
             if(rwMode){
                 for(int i=0; i< 31; i++){
                     String newCreateStream =  writeStreamName + (i+1);
