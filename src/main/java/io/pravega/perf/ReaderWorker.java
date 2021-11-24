@@ -173,10 +173,10 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 time = System.currentTimeMillis();
                 long startReadEvent = System.nanoTime();
                 ret = readData();
-                log.info("event length {}",ret.length);
                 long endReadEvent = System.nanoTime();
                 log.info("received event time {}",endReadEvent - startReadEvent);
                 if (ret != null) {
+                        log.info("event length {}",ret.length);
                         long start = System.nanoTime();
                         java.nio.ByteBuffer buf = java.nio.ByteBuffer.wrap(ret);
                         Event event = Event.getRootAsEvent(buf);
