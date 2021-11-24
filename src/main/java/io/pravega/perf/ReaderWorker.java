@@ -10,16 +10,18 @@
 
 package io.pravega.perf;
 
+
+import Benchmark.Event.Event;
+import Benchmark.Event.Header;
+import Benchmark.Event.Type;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -168,25 +170,30 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
             while ((time - startTime) < msToRun) {
                 time = System.currentTimeMillis();
                 ret = readData();
-                final long INTERVAL = 38841;
-                long start = System.nanoTime();
-                long end=0;
-                do{
-                    end = System.nanoTime();
-                }while(start + INTERVAL >= end);
                 if (ret != null) {
-                    if(enableBatch){
-                        if(eventList.size()>=batchSize){
-                            batchWrite(eventList);
-                            eventList.clear();
-                            stats.recordTime(time, System.currentTimeMillis(), ret.length*batchSize);
-                        }else{
-                            eventList.add(ret);
+                    if (ret != null) {
+
+                        java.nio.ByteBuffer buf = java.nio.ByteBuffer.wrap(ret);
+
+                        Event event = Event.getRootAsEvent(buf);
+                        final long  start = event.header().executionTime();
+                        final String  routingKey = event.header().routingKey();
+                        final String  targetStream = event.header().targetStream();
+                        ByteBuffer payload = event.payloadAsByteBuffer();
+                        byte[] arr = new byte[payload.remaining()];
+                        if(enableBatch){
+                            if(eventList.size()>=batchSize){
+                                batchWrite(eventList);
+                                eventList.clear();
+                                stats.recordTime(time, System.currentTimeMillis(), ret.length*batchSize);
+                            }else{
+                                eventList.add(arr);
+                            }
                         }
-                    }
-                    else{
-                        writeEvent(ret);
-                        stats.recordTime(time, System.currentTimeMillis(), ret.length);
+                        else{
+                            writeEvent(ret);
+                            stats.recordTime(time, System.currentTimeMillis(), ret.length);
+                        }
                     }
                     // log.info("receive event {}", ret);
                     //log.info("read data time: {}", System.nanoTime());
@@ -195,7 +202,10 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
             }
         }
         catch(Exception e){
-            log.info("fail to write event");
+            log.info("fail to write event",e);
+        }
+        catch (Throwable t){
+            log.info("fail to write event",t);
         }finally {
             close();
         }
