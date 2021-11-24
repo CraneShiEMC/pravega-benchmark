@@ -173,6 +173,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 time = System.currentTimeMillis();
                 long startReadEvent = System.nanoTime();
                 ret = readData();
+                log.info("event length {}",ret.length);
                 long endReadEvent = System.nanoTime();
                 log.info("received event time {}",endReadEvent - startReadEvent);
                 if (ret != null) {
@@ -200,7 +201,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                         byte[] newEvent =  builder.sizedByteArray();
                         long newEndTime = System.nanoTime();
                         log.info("serialize time {}", newEndTime - newStartTime);
-
+                        log.info("new event length {}",newEvent.length);
                         if(enableBatch){
                             log.info("event list size {}", eventList.size());
                             if(eventList.size() >= batchSize){

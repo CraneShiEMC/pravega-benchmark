@@ -45,7 +45,6 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
     final private Boolean isEnableRoutingKey;
     final private Boolean isBatch;
     final private int batchSize;
-    final private FlatBufferBuilder builder = new FlatBufferBuilder(1024);
 
     WriterWorker(int sensorId, int events, int EventsPerFlush, int secondsToRun,
                  boolean isRandomKey, int messageSize, long start,
@@ -248,6 +247,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
     }
 
     private byte[] generateEvent(){
+        FlatBufferBuilder builder = new FlatBufferBuilder(1024);
         long time = System.currentTimeMillis();
         int headerOffset = Header.createHeader(builder, Type.C2C,
                 builder.createString("dummy-targetStream"),
@@ -260,7 +260,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         int eventOffset = Event.endEvent(builder);
         builder.finish(eventOffset);
         byte[] event = builder.sizedByteArray();
-        builder.clear();
+        log.info("event size {}", event.length);
         return event;
     }
 
