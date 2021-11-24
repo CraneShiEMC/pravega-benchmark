@@ -200,20 +200,22 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                         byte[] newEvent =  builder.sizedByteArray();
                         long newEndTime = System.nanoTime();
                         log.info("serialize time {}", newEndTime - newStartTime);
-                        log.info("event length {}",newEvent.length);
+
                         if(enableBatch){
                             log.info("event list size {}", eventList.size());
                             if(eventList.size() >= batchSize){
                                 log.info("do batch write");
                                 batchWrite(eventList);
                                 eventList.clear();
-                                stats.recordTime(time, System.currentTimeMillis(), ret.length * batchSize);
+                                stats.recordTime(time, System.currentTimeMillis(), newEvent.length * batchSize);
                             }else{
                                 eventList.add(newEvent);
                             }
                         }
                         else{
-                            writeEvent(newEvent);
+                            //writeEvent(newEvent);
+                            writeEvent(ret);
+                            log.info("event length {}",ret.length);
                             stats.recordTime(time, System.currentTimeMillis(), ret.length);
                         }
                     builder.clear();
