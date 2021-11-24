@@ -181,11 +181,12 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                         final String  targetStream = event.header().targetStream();
                         ByteBuffer payload = event.payloadAsByteBuffer();
                         byte[] arr = new byte[payload.remaining()];
+                        log.info("received event :{}", arr.toString());
                         if(enableBatch){
                             if(eventList.size()>=batchSize){
                                 batchWrite(eventList);
                                 eventList.clear();
-                                stats.recordTime(time, System.currentTimeMillis(), ret.length*batchSize);
+                                stats.recordTime(time, System.currentTimeMillis(), arr.length*batchSize);
                             }else{
                                 eventList.add(arr);
                             }
