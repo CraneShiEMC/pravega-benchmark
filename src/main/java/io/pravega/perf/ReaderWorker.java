@@ -23,6 +23,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google.flatbuffers.FlatBufferBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,16 +38,17 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     final private Performance perf;
     final private boolean writeAndRead;
     final private int batchSize;
-    final List<EventStreamWriter<ByteBuffer>> producerList;
-    final private EventStreamWriter<ByteBuffer> producer;
+    final List<EventStreamWriter<byte[]>> producerList;
+    final private EventStreamWriter<byte[]> producer;
     final private Random random = new Random();
     private PerfStats produceWriterStats;
     private AtomicInteger count = new AtomicInteger(0);
     final private boolean enableBatch;
     private int readDelay;
+    final private FlatBufferBuilder builder = new FlatBufferBuilder(1024);
 
     ReaderWorker(int readerId, int events, int secondsToRun, long start,
-                 PerfStats stats, String readerGrp, int timeout, boolean writeAndRead, int readDelay,int batchSize, List<EventStreamWriter<ByteBuffer>> producerList, boolean enableBatch) {
+                 PerfStats stats, String readerGrp, int timeout, boolean writeAndRead, int readDelay,int batchSize, List<EventStreamWriter<byte[]>> producerList, boolean enableBatch) {
         super(readerId, events, secondsToRun, 0, start, stats, readerGrp, timeout);
 
         this.writeAndRead = writeAndRead;
@@ -61,7 +63,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
 
     }
 
-    private void writeEvent(ByteBuffer data){
+    private void writeEvent(byte[] data){
         //log.info("writeEvent start time {}",System.nanoTime());
         //producerList.get(count.incrementAndGet() % 30).writeEvent(data);
        // producer.writeEvent(data);
@@ -70,7 +72,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         // execute time: 18,614 us
     }
 
-    private void batchWrite(ArrayList<ByteBuffer> dataList){
+    private void batchWrite(ArrayList<byte[]> dataList){
         //log.info("batch event write start time {}",System.nanoTime());
         producerList.get(0).writeEvents("testing", dataList);
         //producer.writeEvents("testing", dataList);
@@ -93,7 +95,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     /**
      * read the data.
      */
-    public abstract ByteBuffer readData();
+    public abstract byte[] readData();
 
     /**
      * close the consumer/reader.
@@ -120,14 +122,14 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
 
     public void EventsReader() throws IOException {
         log.info("EventsReader: Running");
-        ByteBuffer ret = null;
+        byte[] ret = null;
         try {
             int i = 0;
             while (i < events) {
                 final long startTime = System.currentTimeMillis();
                 ret = readData();
                 if (ret != null) {
-                    stats.recordTime(startTime, System.currentTimeMillis(), ret.remaining());
+                    stats.recordTime(startTime, System.currentTimeMillis(), ret.length);
                     i++;
                 }
             }
@@ -140,17 +142,17 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     public void EventsReaderRW() throws IOException {
         log.info("EventsReaderRW: Running");
         final ByteBuffer timeBuffer = ByteBuffer.allocate(TIME_HEADER_SIZE);
-        ByteBuffer ret = null;
+        byte[] ret = null;
         try {
             int i = 0;
             while (i < events) {
                 ret = readData();
                 if (ret != null) {
                     final long endTime = System.currentTimeMillis();
-                    //timeBuffer.clear();
-                    //timeBuffer.put(ret, 0, TIME_HEADER_SIZE);
-                    final long start = ret.getLong(0);
-                    stats.recordTime(start, endTime, ret.remaining());
+                    timeBuffer.clear();
+                    timeBuffer.put(ret, 0, TIME_HEADER_SIZE);
+                    final long start = timeBuffer.getLong(0);
+                    stats.recordTime(start, endTime, ret.length);
                     i++;
                 }
             }
@@ -163,42 +165,56 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     public void EventsTimeReader() throws IOException {
         log.info("EventsTimeReader: Running");
         final long msToRun = secondsToRun * MS_PER_SEC;
-        ByteBuffer ret = null;
+        byte[] ret = null;
         long time = System.currentTimeMillis();
-        ArrayList<ByteBuffer> eventList = new ArrayList<>(batchSize);
+        ArrayList<byte[]> eventList = new ArrayList<>(batchSize);
         try {
             while ((time - startTime) < msToRun) {
                 time = System.currentTimeMillis();
-                long start = System.nanoTime();
+                long startReadEvent = System.nanoTime();
                 ret = readData();
-                long end = System.nanoTime();
-                log.info("received event time {}",end - start);
+                long endReadEvent = System.nanoTime();
+                log.info("received event time {}",endReadEvent - startReadEvent);
                 if (ret != null) {
-//                        long start = System.nanoTime();
-//                        Event event = Event.getRootAsEvent(ret);
-//                        final long  executionTime = event.header().executionTime();
-//                        final String  routingKey = event.header().routingKey();
-//                        final String  targetStream = event.header().targetStream();
-//                        ByteBuffer payload = event.payloadAsByteBuffer();
-//                        long end = System.nanoTime();
-//                        log.info("deserialize time {}", end - start);
+                        long start = System.nanoTime();
+                        java.nio.ByteBuffer buf = java.nio.ByteBuffer.wrap(ret);
+                        Event event = Event.getRootAsEvent(buf);
+                        final long  executionTime = event.header().executionTime();
+                        final String  routingKey = event.header().routingKey();
+                        final String  targetStream = event.header().targetStream();
+                        ByteBuffer payload = event.payloadAsByteBuffer();
+                        long end = System.nanoTime();
+                        log.info("deserialize time {}", end - start);
+
+                        long newStartTime = System.currentTimeMillis();
+                        int headerOffset = Header.createHeader(builder, Type.C2C,
+                            builder.createString(targetStream),
+                            builder.createString(routingKey),
+                                executionTime);
+                        int byteArrayOffset = builder.createByteVector(payload);
+                        Event.startEvent(builder);
+                        Event.addHeader(builder, headerOffset);
+                        Event.addPayload(builder, byteArrayOffset);
+                        int eventOffset = Event.endEvent(builder);
+                        builder.finish(eventOffset);
+                        byte[] newEvent =  builder.sizedByteArray();
+                        long newEndTime = System.currentTimeMillis();
+                        log.info("deserialize time {}", newEndTime - newStartTime);
+
                         if(enableBatch){
                             if(eventList.size()>=batchSize){
                                 batchWrite(eventList);
                                 eventList.clear();
-                                stats.recordTime(time, System.currentTimeMillis(), ret.remaining()*batchSize);
+                                stats.recordTime(time, System.currentTimeMillis(), ret.length*batchSize);
                             }else{
-                                eventList.add(ret);
+                                eventList.add(newEvent);
                             }
                         }
                         else{
                             writeEvent(ret);
-                            stats.recordTime(time, System.currentTimeMillis(), ret.remaining());
+                            stats.recordTime(time, System.currentTimeMillis(), ret.length);
                         }
-                    // log.info("receive event {}", ret);
-                    //log.info("read data time: {}", System.nanoTime());
                 }
-                // eventList.add(ret);
             }
         }
         catch(Exception e){
@@ -215,7 +231,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     public void EventsTimeReaderRW() throws IOException {
         log.info("EventsTimeReaderRW: Running");
         final long msToRun = secondsToRun * MS_PER_SEC;
-        ByteBuffer ret = null;
+        byte[] ret = null;
         long time = System.currentTimeMillis();
         try {
             while ((time - startTime) < msToRun) {
@@ -225,12 +241,13 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                     if (ret != null) {
                         long startDeserialize = System.nanoTime();
                         long startDeserialize2 = System.nanoTime();
-                        Event event = Event.getRootAsEvent(ret);
+                        java.nio.ByteBuffer buf = java.nio.ByteBuffer.wrap(ret);
+                        Event event = Event.getRootAsEvent(buf);
                         final long  start = event.header().executionTime();
                         final String  routingKey = event.header().routingKey();
                         final String  targetStream = event.header().targetStream();
                         long endDeserialize = System.nanoTime();
-                        stats.recordTime(start, time, ret.remaining());
+                        stats.recordTime(start, time, ret.length);
                         log.info("execution time {}", start);
                         log.info("routingKey {}", routingKey);
                         log.info("targetStream {}", targetStream);

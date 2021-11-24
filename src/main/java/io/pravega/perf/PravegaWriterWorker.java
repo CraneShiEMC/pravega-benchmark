@@ -32,7 +32,7 @@ import com.google.common.util.concurrent.RateLimiter;
 public class PravegaWriterWorker extends WriterWorker {
     private static Logger log = LoggerFactory.getLogger(PravegaWriterWorker.class);
 
-    final EventStreamWriter<ByteBuffer> producer;
+    final EventStreamWriter<byte[]> producer;
 
     private final long writeWatermarkPeriodMillis;
     final private Boolean isEnableRoutingKey;
@@ -64,7 +64,7 @@ public class PravegaWriterWorker extends WriterWorker {
                 stats, streamName, eventsPerSec, writeAndRead, seqNum, isEnableRoutingKey,isBatch,batchSize);
 
         this.producer = factory.createEventWriter(streamName,
-                new ByteBufferSerializer(),
+                new ByteArraySerializer(),
                 EventWriterConfig.builder()
                         .enableConnectionPooling(enableConnectionPooling)
                         .build());
@@ -77,19 +77,19 @@ public class PravegaWriterWorker extends WriterWorker {
     }
 
     @Override
-    public long recordWrite(ByteBuffer data, TriConsumer record) {
+    public long recordWrite(byte[] data, TriConsumer record) {
         CompletableFuture<Void> ret;
         final long time = System.currentTimeMillis();
         ret = writeEvent(producer, data);
         if(isBatch){
             ret.thenAccept(d -> {
-                record.accept(time, System.currentTimeMillis(), data.remaining()*batchSize);
+                record.accept(time, System.currentTimeMillis(), data.length*batchSize);
                 //log.info("[Batch write] single event size: {}, batch size: {}", data.length, batchSize);
             });
         }
         else{
             ret.thenAccept(d -> {
-                record.accept(time, System.currentTimeMillis(), data.remaining());
+                record.accept(time, System.currentTimeMillis(), data.length);
                 log.info("Event write: {}", String.valueOf(data));
             });
         }
@@ -98,7 +98,7 @@ public class PravegaWriterWorker extends WriterWorker {
     }
 
     @Override
-    public void writeData(ByteBuffer data) {
+    public void writeData(byte[] data) {
         writeEvent(producer, data).thenAccept(d -> {
             //log.info("Event write: {}", new String(data));
         });
@@ -107,11 +107,11 @@ public class PravegaWriterWorker extends WriterWorker {
     }
 
 
-    private CompletableFuture<Void> writeEvent(EventStreamWriter<ByteBuffer> producer, ByteBuffer data) {
+    private CompletableFuture<Void> writeEvent(EventStreamWriter<byte[]> producer, byte[] data) {
         CompletableFuture<Void> ret;
         if(isBatch){
             int number = random.nextInt(128);
-            List<ByteBuffer> eventList = new ArrayList<>();
+            List<byte[]> eventList = new ArrayList<>();
             for (int i = 0; i < batchSize; i++) {
                 eventList.add(data);
             }

@@ -118,14 +118,14 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
      * @param record to call for benchmarking
      * @return time return the data sent time
      */
-    public abstract long recordWrite(ByteBuffer data, TriConsumer record);
+    public abstract long recordWrite(byte[] data, TriConsumer record);
 
     /**
      * Writes the data and benchmark.
      *
      * @param data data to write
      */
-    public abstract void writeData(ByteBuffer data);
+    public abstract void writeData(byte[] data);
 
     /**
      * Flush the producer data.
@@ -247,7 +247,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         }
     }
 
-    private ByteBuffer generateEvent(){
+    private byte[] generateEvent(){
         long time = System.currentTimeMillis();
         int headerOffset = Header.createHeader(builder, Type.C2C,
                 builder.createString("dummy-targetStream"),
@@ -259,8 +259,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         Event.addPayload(builder, byteArrayOffset);
         int eventOffset = Event.endEvent(builder);
         builder.finish(eventOffset);
-
-        return builder.dataBuffer();
+        return builder.sizedByteArray();
     }
 
     private void EventsWriterTimeRW() throws InterruptedException, IOException {

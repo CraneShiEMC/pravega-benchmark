@@ -249,7 +249,7 @@ public class PravegaPerfTest {
         final String readStreamName;
         final String writeStreamName;
         final Boolean rwMode;
-        protected List<EventStreamWriter<ByteBuffer>> producerList;
+        protected List<EventStreamWriter<byte[]>> producerList;
 
         Test(long startTime, CommandLine commandline) throws IllegalArgumentException {
             this.startTime = startTime;
@@ -504,8 +504,8 @@ public class PravegaPerfTest {
                     PravegaStreamHandler streamHandle2 = new PravegaStreamHandler(scopeName, newCreateStream, null , controllerUri, segmentCount,
                             segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
                     streamHandle2.create();
-                    EventStreamWriter<ByteBuffer> newProducer = factory.createEventWriter(newCreateStream,
-                            new ByteBufferSerializer(),
+                    EventStreamWriter<byte[]> newProducer = factory.createEventWriter(newCreateStream,
+                            new ByteArraySerializer(),
                             EventWriterConfig.builder()
                                     .enableConnectionPooling(enableConnectionPooling)
                                     .build());

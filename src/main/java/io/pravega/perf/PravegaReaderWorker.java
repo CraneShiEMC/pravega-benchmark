@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 public class PravegaReaderWorker extends ReaderWorker {
     private static Logger log = LoggerFactory.getLogger(PravegaReaderWorker.class);
 
-    private final EventStreamReader<ByteBuffer> reader;
+    private final EventStreamReader<byte[]> reader;
     private final Stream stream;
     private final ScheduledExecutorService watermarkExecutor = Executors.newScheduledThreadPool(1);
 
@@ -45,12 +45,12 @@ public class PravegaReaderWorker extends ReaderWorker {
     PravegaReaderWorker(int readerId, int events, int secondsToRun,
                         long start, PerfStats stats, String readergrp,
                         int timeout, boolean writeAndRead, EventStreamClientFactory factory,
-                        Stream stream, long readWatermarkPeriodMillis, int batchSize, List<EventStreamWriter<ByteBuffer>> producerList, boolean enableBatch) {
+                        Stream stream, long readWatermarkPeriodMillis, int batchSize, List<EventStreamWriter<byte[]>> producerList, boolean enableBatch) {
         super(readerId, events, secondsToRun, start, stats, readergrp, timeout, writeAndRead,1000, batchSize, producerList, enableBatch);
 
         final String readerSt = Integer.toString(readerId);
         reader = factory.createReader(
-                readerSt, readergrp, new ByteBufferSerializer(), ReaderConfig.builder().build());
+                readerSt, readergrp, new ByteArraySerializer(), ReaderConfig.builder().build());
         this.stream = stream;
 
         if (readWatermarkPeriodMillis > 0) {
@@ -60,7 +60,7 @@ public class PravegaReaderWorker extends ReaderWorker {
     }
 
     @Override
-    public ByteBuffer readData() {
+    public byte[] readData() {
         try {
             return reader.readNextEvent(timeout).getEvent();
         } catch (ReinitializationRequiredException e) {

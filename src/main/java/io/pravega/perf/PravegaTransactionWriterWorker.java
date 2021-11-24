@@ -30,7 +30,7 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
 
     private static TriConsumer noOpTriConsumer = (a, b, c) -> {};
 
-    private final TransactionalEventStreamWriter<ByteBuffer> producer;
+    private final TransactionalEventStreamWriter<byte[]> producer;
     private final int transactionsPerCommit;
     private final boolean enableWatermark;
     final private Boolean isEnableRoutingKey;
@@ -40,7 +40,7 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
 
     // If null, a transaction has not been started.
     @GuardedBy("this")
-    private Transaction<ByteBuffer> transaction;
+    private Transaction<byte[]> transaction;
 
     /**
      *
@@ -60,7 +60,7 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
         this.producer = factory.createTransactionalEventWriter(
                 writerId,
                 streamName,
-                new ByteBufferSerializer(),
+                new ByteArraySerializer(),
                 EventWriterConfig.builder()
                         .enableConnectionPooling(enableConnectionPooling)
                         .build());
@@ -81,7 +81,7 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
      * @return the current time
      */
     @Override
-    public long recordWrite(ByteBuffer data, TriConsumer record) {
+    public long recordWrite(byte[] data, TriConsumer record) {
         long time = 0;
         try {
             synchronized (this) {
@@ -124,7 +124,7 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
      * @param data data to write
      */
     @Override
-    public void writeData(ByteBuffer data) {
+    public void writeData(byte[] data) {
         recordWrite(data, noOpTriConsumer);
     }
 
