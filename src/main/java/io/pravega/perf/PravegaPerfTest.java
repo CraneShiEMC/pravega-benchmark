@@ -498,7 +498,7 @@ public class PravegaPerfTest {
             log.info("-------------- starting create day stream: {} -------------------",writeStreamName);
             log.info("rwMode {}",rwMode);
             if(rwMode){
-                for(int i=0; i< 31; i++){
+                for(int i=0; i< 1; i++){
                     String newCreateStream =  writeStreamName + (i+1);
                     newRdGrpName = streamName + "RG";
                     streamHandle = new PravegaStreamHandler(scopeName, newCreateStream, newRdGrpName, controllerUri, segmentCount,

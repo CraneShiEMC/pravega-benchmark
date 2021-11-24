@@ -72,7 +72,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
 
     private void batchWrite(ArrayList<ByteBuffer> dataList){
         //log.info("batch event write start time {}",System.nanoTime());
-        producerList.get(count.incrementAndGet() % 30).writeEvents("testing", dataList);
+        producerList.get(0).writeEvents("testing", dataList);
         //producer.writeEvents("testing", dataList);
         //log.info("batch event write end time {}",System.nanoTime());
        //execute time: 39,134,581 us
@@ -171,13 +171,14 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 time = System.currentTimeMillis();
                 ret = readData();
                 if (ret != null) {
-                    if (ret != null) {
+                        long start = System.nanoTime();
                         Event event = Event.getRootAsEvent(ret);
-                        final long  start = event.header().executionTime();
+                        final long  executionTime = event.header().executionTime();
                         final String  routingKey = event.header().routingKey();
                         final String  targetStream = event.header().targetStream();
                         ByteBuffer payload = event.payloadAsByteBuffer();
-                        log.info("received event :{}", payload.toString());
+                        long end = System.nanoTime();
+                        log.info("deserialize time {}", start - end);
                         if(enableBatch){
                             if(eventList.size()>=batchSize){
                                 batchWrite(eventList);
@@ -191,7 +192,6 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                             writeEvent(ret);
                             stats.recordTime(time, System.currentTimeMillis(), ret.remaining());
                         }
-                    }
                     // log.info("receive event {}", ret);
                     //log.info("read data time: {}", System.nanoTime());
                 }
