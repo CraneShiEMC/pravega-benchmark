@@ -118,14 +118,14 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
      * @param record to call for benchmarking
      * @return time return the data sent time
      */
-    public abstract long recordWrite(byte[] data, TriConsumer record);
+    public abstract long recordWrite(ByteBuffer data, TriConsumer record);
 
     /**
      * Writes the data and benchmark.
      *
      * @param data data to write
      */
-    public abstract void writeData(byte[] data);
+    public abstract void writeData(ByteBuffer data);
 
     /**
      * Flush the producer data.
@@ -157,10 +157,10 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         for (int i = 0; i < events; i++) {
             //byte[] data = createPayload();
             if(isBatch){
-                recordWrite(createPayload(eventsPerSec*batchSize), stats::recordTime);
+                recordWrite(generateEvent(), stats::recordTime);
             }
             else{
-                recordWrite(payload, stats::recordTime);
+                recordWrite(generateEvent(), stats::recordTime);
             }
         }
         flush();
@@ -174,7 +174,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         while (cnt < events) {
             int loopMax = Math.min(EventsPerFlush, events - cnt);
             for (int i = 0; i < loopMax; i++) {
-                eCnt.control(cnt++, recordWrite(payload, stats::recordTime));
+                eCnt.control(cnt++, recordWrite(generateEvent(), stats::recordTime));
             }
             flush();
         }
@@ -227,7 +227,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
             byte[] bytes = timeBuffer.putLong(0, System.currentTimeMillis()).array();
             System.arraycopy(bytes, 0, payload, 0, bytes.length);
             try {
-                writeData(payload);
+                writeData(generateEvent());
                 /*
                 flush is required here for following reasons:
                 1. The writeData is called for End to End latency mode; hence make sure that data is sent.
@@ -247,7 +247,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         }
     }
 
-    private byte[] generateEvent(){
+    private ByteBuffer generateEvent(){
         long time = System.currentTimeMillis();
         int headerOffset = Header.createHeader(builder, Type.C2C,
                 builder.createString("dummy-targetStream"),
@@ -260,9 +260,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         int eventOffset = Event.endEvent(builder);
         builder.finish(eventOffset);
 
-        byte[] data = builder.sizedByteArray();
-
-        return data;
+        return builder.dataBuffer();
     }
 
     private void EventsWriterTimeRW() throws InterruptedException, IOException {

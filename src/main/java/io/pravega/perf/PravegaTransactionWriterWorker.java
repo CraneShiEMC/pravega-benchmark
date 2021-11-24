@@ -16,10 +16,12 @@ import io.pravega.client.stream.Transaction;
 import io.pravega.client.stream.TransactionalEventStreamWriter;
 import io.pravega.client.stream.TxnFailedException;
 import io.pravega.client.stream.impl.ByteArraySerializer;
+import io.pravega.client.stream.impl.ByteBufferSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.GuardedBy;
+import java.nio.ByteBuffer;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -28,7 +30,7 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
 
     private static TriConsumer noOpTriConsumer = (a, b, c) -> {};
 
-    private final TransactionalEventStreamWriter<byte[]> producer;
+    private final TransactionalEventStreamWriter<ByteBuffer> producer;
     private final int transactionsPerCommit;
     private final boolean enableWatermark;
     final private Boolean isEnableRoutingKey;
@@ -38,7 +40,7 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
 
     // If null, a transaction has not been started.
     @GuardedBy("this")
-    private Transaction<byte[]> transaction;
+    private Transaction<ByteBuffer> transaction;
 
     /**
      *
@@ -58,7 +60,7 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
         this.producer = factory.createTransactionalEventWriter(
                 writerId,
                 streamName,
-                new ByteArraySerializer(),
+                new ByteBufferSerializer(),
                 EventWriterConfig.builder()
                         .enableConnectionPooling(enableConnectionPooling)
                         .build());
@@ -79,7 +81,7 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
      * @return the current time
      */
     @Override
-    public long recordWrite(byte[] data, TriConsumer record) {
+    public long recordWrite(ByteBuffer data, TriConsumer record) {
         long time = 0;
         try {
             synchronized (this) {
@@ -88,7 +90,7 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
                     transaction = producer.beginTxn();
                 }
                 if(isEnableRoutingKey) {
-                    String dataString = new String(data);
+                    String dataString = String.valueOf(data);
                     String routingKey = dataString.split("-")[1];
                     transaction.writeEvent(routingKey, data);
 
@@ -96,7 +98,7 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
                     transaction.writeEvent(data);
                 }
                 transaction.flush();
-                log.info("Event write: {}", new String(data));
+                log.info("Event write: {}", String.valueOf(data));
                 record.accept(time, System.currentTimeMillis(), messageSize);
                 eventCount++;
                 if (eventCount >= transactionsPerCommit) {
@@ -122,7 +124,7 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
      * @param data data to write
      */
     @Override
-    public void writeData(byte[] data) {
+    public void writeData(ByteBuffer data) {
         recordWrite(data, noOpTriConsumer);
     }
 
