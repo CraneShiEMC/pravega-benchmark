@@ -20,6 +20,7 @@ import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.ReaderGroup;
 import io.pravega.client.stream.impl.ByteArraySerializer;
+import io.pravega.client.stream.impl.ByteBufferSerializer;
 import io.pravega.client.stream.impl.ClientFactoryImpl;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -33,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -245,7 +247,7 @@ public class PravegaPerfTest {
         final int batchSize;
         final String readStreamName;
         final String writeStreamName;
-        protected List<EventStreamWriter<byte[]>> producerList;
+        protected List<EventStreamWriter<ByteBuffer>> producerList;
 
         Test(long startTime, CommandLine commandline) throws IllegalArgumentException {
             this.startTime = startTime;
@@ -497,8 +499,8 @@ public class PravegaPerfTest {
                 streamHandle = new PravegaStreamHandler(scopeName, newCreateStream, newRdGrpName, controllerUri, segmentCount,
                         segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
                 streamHandle.create();
-                    EventStreamWriter<byte[]> newProducer = factory.createEventWriter(newCreateStream,
-                    new ByteArraySerializer(),
+                    EventStreamWriter<ByteBuffer> newProducer = factory.createEventWriter(newCreateStream,
+                    new ByteBufferSerializer(),
                     EventWriterConfig.builder()
                         .enableConnectionPooling(enableConnectionPooling)
                         .build());

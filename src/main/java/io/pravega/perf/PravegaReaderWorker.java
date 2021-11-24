@@ -18,9 +18,11 @@ import io.pravega.client.stream.ReinitializationRequiredException;
 import io.pravega.client.stream.Stream;
 import io.pravega.client.stream.TimeWindow;
 import io.pravega.client.stream.impl.ByteArraySerializer;
+import io.pravega.client.stream.impl.ByteBufferSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -32,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 public class PravegaReaderWorker extends ReaderWorker {
     private static Logger log = LoggerFactory.getLogger(PravegaReaderWorker.class);
 
-    private final EventStreamReader<byte[]> reader;
+    private final EventStreamReader<ByteBuffer> reader;
     private final Stream stream;
     private final ScheduledExecutorService watermarkExecutor = Executors.newScheduledThreadPool(1);
 
@@ -43,12 +45,12 @@ public class PravegaReaderWorker extends ReaderWorker {
     PravegaReaderWorker(int readerId, int events, int secondsToRun,
                         long start, PerfStats stats, String readergrp,
                         int timeout, boolean writeAndRead, EventStreamClientFactory factory,
-                        Stream stream, long readWatermarkPeriodMillis, int batchSize, List<EventStreamWriter<byte[]>> producerList, boolean enableBatch) {
+                        Stream stream, long readWatermarkPeriodMillis, int batchSize, List<EventStreamWriter<ByteBuffer>> producerList, boolean enableBatch) {
         super(readerId, events, secondsToRun, start, stats, readergrp, timeout, writeAndRead,1000, batchSize, producerList, enableBatch);
 
         final String readerSt = Integer.toString(readerId);
         reader = factory.createReader(
-                readerSt, readergrp, new ByteArraySerializer(), ReaderConfig.builder().build());
+                readerSt, readergrp, new ByteBufferSerializer(), ReaderConfig.builder().build());
         this.stream = stream;
 
         if (readWatermarkPeriodMillis > 0) {
@@ -58,7 +60,7 @@ public class PravegaReaderWorker extends ReaderWorker {
     }
 
     @Override
-    public byte[] readData() {
+    public ByteBuffer readData() {
         try {
             return reader.readNextEvent(timeout).getEvent();
         } catch (ReinitializationRequiredException e) {
