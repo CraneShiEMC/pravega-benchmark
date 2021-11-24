@@ -165,27 +165,30 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         final long msToRun = secondsToRun * MS_PER_SEC;
         ByteBuffer ret = null;
         long time = System.currentTimeMillis();
-        ArrayList<ByteBuffer> eventList = new ArrayList<>();
+        ArrayList<ByteBuffer> eventList = new ArrayList<>(batchSize);
         try {
             while ((time - startTime) < msToRun) {
                 time = System.currentTimeMillis();
+                long start = System.nanoTime();
                 ret = readData();
+                long end = System.nanoTime();
+                log.info("received event time {}",end - start);
                 if (ret != null) {
-                        long start = System.nanoTime();
-                        Event event = Event.getRootAsEvent(ret);
-                        final long  executionTime = event.header().executionTime();
-                        final String  routingKey = event.header().routingKey();
-                        final String  targetStream = event.header().targetStream();
-                        ByteBuffer payload = event.payloadAsByteBuffer();
-                        long end = System.nanoTime();
-                        log.info("deserialize time {}", start - end);
+//                        long start = System.nanoTime();
+//                        Event event = Event.getRootAsEvent(ret);
+//                        final long  executionTime = event.header().executionTime();
+//                        final String  routingKey = event.header().routingKey();
+//                        final String  targetStream = event.header().targetStream();
+//                        ByteBuffer payload = event.payloadAsByteBuffer();
+//                        long end = System.nanoTime();
+//                        log.info("deserialize time {}", end - start);
                         if(enableBatch){
                             if(eventList.size()>=batchSize){
                                 batchWrite(eventList);
                                 eventList.clear();
-                                stats.recordTime(time, System.currentTimeMillis(), payload.remaining()*batchSize);
+                                stats.recordTime(time, System.currentTimeMillis(), ret.remaining()*batchSize);
                             }else{
-                                eventList.add(payload);
+                                eventList.add(ret);
                             }
                         }
                         else{

@@ -475,7 +475,7 @@ public class PravegaPerfTest {
                     .maxBackoffMillis(5000).build(),
                     bgExecutor);
 
-                String newRdGrpName = rdGrpName;
+                String newRdGrpName = rdGrpName + System.currentTimeMillis();
                 PravegaStreamHandler streamHandle = new PravegaStreamHandler(scopeName, streamName, newRdGrpName, controllerUri, segmentCount,
                         segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
 
@@ -500,10 +500,10 @@ public class PravegaPerfTest {
             if(rwMode){
                 for(int i=0; i< 1; i++){
                     String newCreateStream =  writeStreamName + (i+1);
-                    newRdGrpName = streamName + "RG";
-                    streamHandle = new PravegaStreamHandler(scopeName, newCreateStream, newRdGrpName, controllerUri, segmentCount,
+
+                    PravegaStreamHandler streamHandle2 = new PravegaStreamHandler(scopeName, newCreateStream, null , controllerUri, segmentCount,
                             segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
-                    streamHandle.create();
+                    streamHandle2.create();
                     EventStreamWriter<ByteBuffer> newProducer = factory.createEventWriter(newCreateStream,
                             new ByteBufferSerializer(),
                             EventWriterConfig.builder()
