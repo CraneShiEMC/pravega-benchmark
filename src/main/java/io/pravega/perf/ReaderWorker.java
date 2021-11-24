@@ -200,7 +200,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                         byte[] newEvent =  builder.sizedByteArray();
                         long newEndTime = System.currentTimeMillis();
                         log.info("serialize time {}", newEndTime - newStartTime);
-
+                        log.info("event length {}",newEvent.length);
                         if(enableBatch){
                             log.info("event list size {}", eventList.size());
                             if(eventList.size() >= batchSize){
