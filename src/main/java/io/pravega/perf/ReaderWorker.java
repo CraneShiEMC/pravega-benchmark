@@ -218,7 +218,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                             long batchASTime = System.nanoTime();
                             eventList.add(newEvent);
                             long batchAETime = System.nanoTime();
-                            log.info("batch write time {}", batchAETime - batchASTime);
+                            log.info("event list add time {}", batchAETime - batchASTime);
                         }
                     } else {
                         //writeEvent(newEvent);
@@ -229,7 +229,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                     long buildCSTime = System.nanoTime();
                     builder.clear();
                     long buildCETime = System.nanoTime();
-                    log.info("batch write time {}", buildCETime - buildCSTime);
+                    log.info("build clear time {}", buildCETime - buildCSTime);
                     long endReadDataTime = System.nanoTime();
                     log.info("whole read event time {}", endReadDataTime - beginReadDataTime);
                 }
