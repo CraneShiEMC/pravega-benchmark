@@ -176,9 +176,9 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 long startReadEvent = System.nanoTime();
                 ret = readData();
                 long endReadEvent = System.nanoTime();
-                log.info("received event time {}", endReadEvent - startReadEvent);
+                //log.info("received event time {}", endReadEvent - startReadEvent);
                 if (ret != null) {
-                    log.info("event length {}", ret.length);
+                    //log.info("event length {}", ret.length);
                     long start = System.nanoTime();
                     java.nio.ByteBuffer buf = java.nio.ByteBuffer.wrap(ret);
                     Event event = Event.getRootAsEvent(buf);
@@ -187,7 +187,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                     final String targetStream = event.header().targetStream();
                     ByteBuffer payload = event.payloadAsByteBuffer();
                     long end = System.nanoTime();
-                    log.info("deserialize time {}", end - start);
+                    //log.info("deserialize time {}", end - start);
 
                     long newStartTime = System.nanoTime();
                     int headerOffset = Header.createHeader(builder, Type.C2C,
@@ -202,34 +202,34 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                     builder.finish(eventOffset);
                     byte[] newEvent = builder.sizedByteArray();
                     long newEndTime = System.nanoTime();
-                    log.info("serialize time {}", newEndTime - newStartTime);
-                    log.info("new event length {}", newEvent.length);
+                    //log.info("serialize time {}", newEndTime - newStartTime);
+                    //log.info("new event length {}", newEvent.length);
                     if (enableBatch) {
-                        log.info("event list size {}", eventList.size());
+                        //log.info("event list size {}", eventList.size());
                         if (eventList.size() >= batchSize) {
-                            log.info("do batch write");
+                            //log.info("do batch write");
                             long batchWSTime = System.nanoTime();
                             batchWrite(eventList);
                             eventList.clear();
                             //stats.recordTime(time, System.currentTimeMillis(), newEvent.length * batchSize);
                             long batchWETime = System.nanoTime();
-                            log.info("batch write time {}", batchWETime - batchWSTime);
+                            //log.info("batch write time {}", batchWETime - batchWSTime);
                         } else {
                             long batchASTime = System.nanoTime();
                             eventList.add(newEvent);
                             long batchAETime = System.nanoTime();
-                            log.info("event list add time {}", batchAETime - batchASTime);
+                            //log.info("event list add time {}", batchAETime - batchASTime);
                         }
                     } else {
                         //writeEvent(newEvent);
                         writeEvent(ret);
-                        log.info("event length {}", ret.length);
+                        //log.info("event length {}", ret.length);
                         //stats.recordTime(time, System.currentTimeMillis(), ret.length);
                     }
                     long buildCSTime = System.nanoTime();
                     builder.clear();
                     long buildCETime = System.nanoTime();
-                    log.info("build clear time {}", buildCETime - buildCSTime);
+                    //log.info("build clear time {}", buildCETime - buildCSTime);
                     long endReadDataTime = System.nanoTime();
                     log.info("whole read event time {}", endReadDataTime - beginReadDataTime);
                 }
