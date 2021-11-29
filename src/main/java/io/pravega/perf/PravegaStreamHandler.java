@@ -11,6 +11,7 @@
 package io.pravega.perf;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -24,16 +25,13 @@ import java.util.concurrent.TimeoutException;
 
 import io.pravega.client.control.impl.ControllerImpl;
 import io.pravega.client.admin.StreamManager;
-import io.pravega.client.stream.StreamConfiguration;
-import io.pravega.client.stream.ReaderGroupConfig;
+import io.pravega.client.stream.*;
+import io.pravega.client.stream.RetentionPolicy;
 import io.pravega.client.admin.ReaderGroupManager;
-import io.pravega.client.stream.ReaderGroup;
-import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.impl.StreamSegments;
 import io.pravega.client.segment.impl.Segment;
 import io.pravega.client.stream.impl.StreamImpl;
 import io.pravega.client.ClientConfig;
-import io.pravega.client.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -182,6 +180,7 @@ public class PravegaStreamHandler {
 
         return StreamConfiguration.builder()
             .scalingPolicy(scalingPolicy)
+                .retentionPolicy(RetentionPolicy.byTime(Duration.ofHours(1)))
             .build();
     }
 }

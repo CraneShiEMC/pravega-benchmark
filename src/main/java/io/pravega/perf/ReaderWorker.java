@@ -10,6 +10,9 @@
 
 package io.pravega.perf;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -20,6 +23,7 @@ import java.util.concurrent.ExecutionException;
  * An Abstract class for Readers.
  */
 public abstract class ReaderWorker extends Worker implements Callable<Void> {
+    private static Logger log = LoggerFactory.getLogger(ReaderWorker.class);
     final private static int MS_PER_SEC = 1000;
     final private Performance perf;
     final private boolean writeAndRead;
@@ -116,6 +120,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 time = System.currentTimeMillis();
                 ret = readData();
                 if (ret != null) {
+                    log.info("received event {}", ret.toString());
                     stats.recordTime(time, System.currentTimeMillis(), ret.length);
                 }
             }
