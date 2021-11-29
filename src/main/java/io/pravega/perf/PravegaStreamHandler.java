@@ -180,7 +180,7 @@ public class PravegaStreamHandler {
         log.info("create stream with 1 hours retention policy");
         return StreamConfiguration.builder()
             .scalingPolicy(scalingPolicy)
-                .retentionPolicy(RetentionPolicy.byTime(Duration.ofHours(1)))
+                .retentionPolicy(RetentionPolicy.byTime(Duration.ofMinutes(5)))
             .build();
     }
 }
