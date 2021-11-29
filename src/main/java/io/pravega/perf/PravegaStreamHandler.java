@@ -11,6 +11,7 @@
 package io.pravega.perf;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -180,8 +181,9 @@ public class PravegaStreamHandler {
             scalingPolicy = ScalingPolicy.byEventRate(segmentScaleEventsPerSecond, scaleFactor, segCount);
         }
 
+        log.info("create stream with 1 hours retention policy");
         return StreamConfiguration.builder()
-            .scalingPolicy(scalingPolicy)
+            .scalingPolicy(scalingPolicy).RetentionPolicy.byTime(Duration.ofHours(1))
             .build();
     }
 }
