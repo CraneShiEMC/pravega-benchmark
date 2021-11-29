@@ -177,7 +177,7 @@ public class PravegaStreamHandler {
         } else if (segmentScaleEventsPerSecond > 0) {
             scalingPolicy = ScalingPolicy.byEventRate(segmentScaleEventsPerSecond, scaleFactor, segCount);
         }
-
+        log.info("create stream with 1 hours retention policy");
         return StreamConfiguration.builder()
             .scalingPolicy(scalingPolicy)
                 .retentionPolicy(RetentionPolicy.byTime(Duration.ofHours(1)))

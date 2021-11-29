@@ -78,6 +78,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                 final long startTime = System.currentTimeMillis();
                 ret = readData();
                 if (ret != null) {
+                    log.info("received event {}", ret.toString());
                     stats.recordTime(startTime, System.currentTimeMillis(), ret.length);
                     i++;
                 }
@@ -96,6 +97,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
             while (i < events) {
                 ret = readData();
                 if (ret != null) {
+                    log.info("received event {}", ret.toString());
                     final long endTime = System.currentTimeMillis();
                     timeBuffer.clear();
                     timeBuffer.put(ret, 0, TIME_HEADER_SIZE);
