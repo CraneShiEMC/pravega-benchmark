@@ -46,9 +46,10 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     private AtomicInteger count = new AtomicInteger(0);
     final private boolean enableBatch;
     private int readDelay;
+    final private  int writeStreamNumber;
 
     ReaderWorker(int readerId, int events, int secondsToRun, long start,
-                 PerfStats stats, String readerGrp, int timeout, boolean writeAndRead, int readDelay, int batchSize, List<EventStreamWriter<byte[]>> producerList, boolean enableBatch) {
+                 PerfStats stats, String readerGrp, int timeout, boolean writeAndRead, int readDelay, int batchSize, List<EventStreamWriter<byte[]>> producerList, boolean enableBatch, int writeStreamNumber) {
         super(readerId, events, secondsToRun, 0, start, stats, readerGrp, timeout);
 
         this.writeAndRead = writeAndRead;
@@ -60,23 +61,16 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         producer = producerList.get(0);
         produceWriterStats = new PerfStats("Writing", 5000, 120, null, null);
         this.enableBatch = enableBatch;
-
+        this.writeStreamNumber = writeStreamNumber;
     }
 
     private void writeEvent(byte[] data) {
-        //log.info("writeEvent start time {}",System.nanoTime());
-        //producerList.get(count.incrementAndGet() % 30).writeEvent(data);
-        // producer.writeEvent(data);
-        producerList.get(count.incrementAndGet() % 30).writeEvent(data);
-        //log.info("writeEvent end time {}",System.nanoTime());
+        producerList.get(count.incrementAndGet() % this.writeStreamNumber).writeEvent(data);
         // execute time: 18,614 us
     }
 
     private void batchWrite(ArrayList<byte[]> dataList) {
-        //log.info("batch event write start time {}",System.nanoTime());
-        producerList.get(count.incrementAndGet() % 30).writeEvents("testing", dataList);
-        //producer.writeEvents("testing", dataList);
-        //log.info("batch event write end time {}",System.nanoTime());
+        producerList.get(count.incrementAndGet() % this.writeStreamNumber).writeEvents("testing", dataList);
         //execute time: 39,134,581 us
     }
 

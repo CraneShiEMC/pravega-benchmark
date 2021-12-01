@@ -119,6 +119,7 @@ public class PravegaPerfTest {
         options.addOption("enableBatch", true, "whether enable batch write");
         options.addOption("batchSize", true, "batch write size");
         options.addOption("rwMode",true, "read from month write to day");
+        options.addOption("writeStreamNumber", true, "how many stream to write again from month stream");
         parser = new DefaultParser();
         try {
             commandline = parser.parse(options, args);
@@ -249,6 +250,7 @@ public class PravegaPerfTest {
         final String readStreamName;
         final String writeStreamName;
         final Boolean rwMode;
+        final int writeStreamNumber;
         protected List<EventStreamWriter<byte[]>> producerList;
 
         Test(long startTime, CommandLine commandline) throws IllegalArgumentException {
@@ -265,6 +267,7 @@ public class PravegaPerfTest {
             readStreamName = parseStringOption(commandline, "readStreamName", "month-stream");
             writeStreamName = parseStringOption(commandline, "writeStreamName", "day-stream");
             rwMode = parseBooleanOption(commandline,"rwMode", false);
+            writeStreamNumber = parseIntOption(commandline,"writeStreamNumber", 31);
             if (commandline.hasOption("flush")) {
                 int flushEvents = Integer.parseInt(commandline.getOptionValue("flush"));
                 if (flushEvents > 0) {
@@ -498,7 +501,7 @@ public class PravegaPerfTest {
             log.info("-------------- starting create day stream: {} -------------------",writeStreamName);
             log.info("rwMode {}",rwMode);
             if(rwMode){
-                for(int i=0; i< 30; i++){
+                for(int i=0; i< writeStreamNumber; i++){
                     String newCreateStream =  writeStreamName + (i+1);
 
                     PravegaStreamHandler streamHandle2 = new PravegaStreamHandler(scopeName, newCreateStream, null , controllerUri, segmentCount,
@@ -584,7 +587,7 @@ public class PravegaPerfTest {
                                     runtimeSec, startTime, consumeStats,
                                     rdGrpName, TIMEOUT, writeAndRead, factory,
                                     io.pravega.client.stream.Stream.of(scopeName, streamName),
-                                    readWatermarkPeriodMillis, batchSize, producerList,enableBatch);
+                                    readWatermarkPeriodMillis, batchSize, producerList,enableBatch, writeStreamNumber);
                            
                     log.info("---------- Create  reader for stream {} ----------", streamName);
                     allReaders.add(reader);
