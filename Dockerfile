@@ -1,6 +1,6 @@
 # Building Container
 
-FROM gradle:4.10-jdk11 as GradleBuilder
+FROM gradle:4.10-jdk8 as GradleBuilder
 
 USER 0
 
@@ -10,7 +10,7 @@ RUN update-ca-certificates
 RUN apt-get update \
     && apt-get install -y \
         maven \
-    && app-get install -y openjdk-11-jdk \
+    && app-get install -y openjdk-8-jdk \
     && rm -rf /var/lib/apt/lists/*
 USER gradle
 
