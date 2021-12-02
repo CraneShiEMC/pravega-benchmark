@@ -6,6 +6,7 @@ USER 0
 
 COPY ca-certificates/* /usr/local/share/ca-certificates/
 RUN update-ca-certificates
+RUN apt install -y openjdk-11-jdk
 
 RUN apt-get update \
     && apt-get install -y \
