@@ -29,7 +29,7 @@ RUN gradle installDist \
 
 # Runtime Container
 
-FROM openjdk:8-jre
+FROM openjdk:8-jdk
 
 ENV APP_NAME=pravega-benchmark
 
