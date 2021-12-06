@@ -260,7 +260,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         int eventOffset = Event.endEvent(builder);
         builder.finish(eventOffset);
         byte[] event = builder.sizedByteArray();
-        log.info("event size {}", event.length);
+//        log.info("event size {}", event.length);
         return event;
     }
 
