@@ -368,11 +368,7 @@ public class PravegaPerfTest {
 
                 writeAndRead = consumerCount > 0;
 
-                if (writeAndRead) {
-                    produceStats = null;
-                } else {
-                    produceStats = new PerfStats("Writing", reportingInterval, messageSize, writeFile, writeThroughputFile);
-                }
+                produceStats = new PerfStats("Writing", reportingInterval, messageSize, writeFile, writeThroughputFile);
 
                 eventsPerProducer = (events + producerCount - 1) / producerCount;
                 if (throughput < 0 && runtimeSec > 0) {
