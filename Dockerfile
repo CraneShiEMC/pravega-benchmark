@@ -10,7 +10,7 @@ RUN update-ca-certificates
 RUN apt-get update \
     && apt-get install -y \
         maven \
-    && app-get install -y openjdk-8-jdk \
+    && apt-get install -y openjdk-8-jdk \
     && rm -rf /var/lib/apt/lists/*
 USER gradle
 
