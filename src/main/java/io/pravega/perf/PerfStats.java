@@ -11,6 +11,7 @@ package io.pravega.perf;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
@@ -20,6 +21,7 @@ import java.util.concurrent.locks.LockSupport;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import io.pravega.client.stream.ReaderGroup;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVParser;
@@ -45,11 +47,20 @@ public class PerfStats {
     final private String throughputCsvFile;
     final private int messageSize;
     final private int windowInterval;
+    private List<ReaderGroup> readerGroups;
     final private ConcurrentLinkedQueue<TimeStamp> queue;
     final private ForkJoinPool executor;
 
     @GuardedBy("this")
     private Future<Void> ret;
+
+    public List<ReaderGroup> getReaderGroups() {
+        return readerGroups;
+    }
+
+    public void setReaderGroups(List<ReaderGroup> readerGroups) {
+        this.readerGroups = readerGroups;
+    }
 
     /**
      * Private class for start and end time.
@@ -155,7 +166,9 @@ public class PerfStats {
             if (throughputRecorder != null) {
                 throughputRecorder.record(window.startTime, window.lastTime, window.bytes, window.getMiBPerSecond(), window.count, window.getEventsPerSecond());
             }
-
+            for (ReaderGroup readerGroup : readerGroups) {
+                log.info("readerGroup {} has unreadBytes {}", readerGroup.getGroupName(), readerGroup.getMetrics().unreadBytes());
+            }
             window.print();
             window.reset(time);
         }

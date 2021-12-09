@@ -40,9 +40,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
     final private boolean writeAndRead;
     final private int batchSize;
     final List<EventStreamWriter<byte[]>> producerList;
-    final private EventStreamWriter<byte[]> producer;
-    final private Random random = new Random();
-    private PerfStats produceWriterStats;
+
     private AtomicInteger count = new AtomicInteger(0);
     final private boolean enableBatch;
     private int readDelay;
@@ -57,9 +55,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         this.perf = createBenchmark();
         this.batchSize = batchSize;
         this.producerList = producerList;
-        log.info("producer list: {}", producerList.size());
-        producer = producerList.get(0);
-        produceWriterStats = new PerfStats("Writing", 5000, 120, null, null);
+
         this.enableBatch = enableBatch;
         this.writeStreamNumber = writeStreamNumber;
     }

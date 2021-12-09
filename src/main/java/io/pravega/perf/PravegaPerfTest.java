@@ -206,7 +206,7 @@ public class PravegaPerfTest {
     static private abstract class Test {
         static final int MAXTIME = 60 * 60 * 24;
         static final int DEFAULT_REPORTING_INTERVAL = 5000;
-        static final int TIMEOUT = 1000;
+        static final int TIMEOUT = 30000;
         static final String SCOPE = "Scope";
 
         final String controllerUri;
@@ -518,6 +518,7 @@ public class PravegaPerfTest {
 
                 }
             }
+            consumeStats.setReaderGroups(readerGroups);
         }
 
         private AtomicLong[] getAtomicNum() {
@@ -578,18 +579,18 @@ public class PravegaPerfTest {
                 allReaders = new ArrayList<>();
                 log.info("get consumers, streamMap size {}", streamMap.size());
                 streamMap.forEach((streamName, rdGrpName) -> {
-                    final ReaderWorker reader;
-                    reader = new PravegaReaderWorker(0, eventsPerConsumer,
-                                    runtimeSec, startTime, consumeStats,
-                                    rdGrpName, TIMEOUT, writeAndRead, factory,
-                                    io.pravega.client.stream.Stream.of(scopeName, streamName),
-                                    readWatermarkPeriodMillis, batchSize, producerList,enableBatch, writeStreamNumber);
-                           
-                    log.info("---------- Create  reader for stream {} ----------", streamName);
-                    allReaders.add(reader);
-                    log.info("reader number {}",allReaders.size());
+                    for(int i =0 ; i < consumerCount; i++) {
+                        final ReaderWorker reader;
+                        reader = new PravegaReaderWorker(i, eventsPerConsumer,
+                                runtimeSec, startTime, consumeStats,
+                                rdGrpName, TIMEOUT, writeAndRead, factory,
+                                io.pravega.client.stream.Stream.of(scopeName, streamName),
+                                readWatermarkPeriodMillis, batchSize, producerList, enableBatch, writeStreamNumber);
+                        log.info("---------- Create  reader {} for stream {} ----------", i, streamName);
+                        allReaders.add(reader);
+                    }
                 });
-
+                log.info("reader number {}", allReaders.size());
             } else {
                 allReaders = null;
             }
