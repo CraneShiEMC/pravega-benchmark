@@ -161,25 +161,25 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
         FlatBufferBuilder builder = new FlatBufferBuilder(1024);
         try {
             while ((time - startTime) < msToRun) {
-                long beginReadDataTime = System.nanoTime();
+//                long beginReadDataTime = System.nanoTime();
                 time = System.currentTimeMillis();
-                long startReadEvent = System.nanoTime();
+//                long startReadEvent = System.nanoTime();
                 ret = readData();
-                long endReadEvent = System.nanoTime();
+//                long endReadEvent = System.nanoTime();
                 //log.info("received event time {}", endReadEvent - startReadEvent);
                 if (ret != null) {
                     //log.info("event length {}", ret.length);
-                    long start = System.nanoTime();
+//                    long start = System.nanoTime();
                     java.nio.ByteBuffer buf = java.nio.ByteBuffer.wrap(ret);
                     Event event = Event.getRootAsEvent(buf);
                     final long executionTime = event.header().executionTime();
                     final String routingKey = event.header().routingKey();
                     final String targetStream = event.header().targetStream();
                     ByteBuffer payload = event.payloadAsByteBuffer();
-                    long end = System.nanoTime();
+//                    long end = System.nanoTime();
                     //log.info("deserialize time {}", end - start);
 
-                    long newStartTime = System.nanoTime();
+//                    long newStartTime = System.nanoTime();
                     int headerOffset = Header.createHeader(builder, Type.C2C,
                             builder.createString(targetStream),
                             builder.createString(routingKey),
@@ -191,7 +191,7 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                     int eventOffset = Event.endEvent(builder);
                     builder.finish(eventOffset);
                     byte[] newEvent = builder.sizedByteArray();
-                    long newEndTime = System.nanoTime();
+//                    long newEndTime = System.nanoTime();
                     //log.info("serialize time {}", newEndTime - newStartTime);
                     //log.info("new event length {}", newEvent.length);
                     if (enableBatch) {
@@ -202,12 +202,12 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                             batchWrite(eventList);
                             eventList.clear();
                             stats.recordTime(time, System.currentTimeMillis(), newEvent.length * batchSize);
-                            long batchWETime = System.nanoTime();
+//                            long batchWETime = System.nanoTime();
                             //log.info("batch write time {}", batchWETime - batchWSTime);
                         } else {
-                            long batchASTime = System.nanoTime();
+//                            long batchASTime = System.nanoTime();
                             eventList.add(newEvent);
-                            long batchAETime = System.nanoTime();
+//                            long batchAETime = System.nanoTime();
                             //log.info("event list add time {}", batchAETime - batchASTime);
                         }
                     } else {
@@ -216,11 +216,11 @@ public abstract class ReaderWorker extends Worker implements Callable<Void> {
                         //log.info("event length {}", ret.length);
                         stats.recordTime(time, System.currentTimeMillis(), ret.length);
                     }
-                    long buildCSTime = System.nanoTime();
+//                    long buildCSTime = System.nanoTime();
                     builder.clear();
-                    long buildCETime = System.nanoTime();
+//                    long buildCETime = System.nanoTime();
                     //log.info("build clear time {}", buildCETime - buildCSTime);
-                    long endReadDataTime = System.nanoTime();
+//                    long endReadDataTime = System.nanoTime();
                     //log.info("whole read event time {}", endReadDataTime - beginReadDataTime);
                 }
             }
