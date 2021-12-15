@@ -160,7 +160,7 @@ public class PravegaStreamHandler {
         if (readerGroupManager == null) {
             readerGroupManager = ReaderGroupManager.withScope(scope, clientConfig);
             rdGrpConfig = ReaderGroupConfig.builder()
-                    .stream(Stream.of(scope, stream),StreamCut.UNBOUNDED, streamcut)
+                    .stream(Stream.of(scope, stream),streamcut, StreamCut.UNBOUNDED)
                     .automaticCheckpointIntervalMillis(3000)
                     .build();
         }
