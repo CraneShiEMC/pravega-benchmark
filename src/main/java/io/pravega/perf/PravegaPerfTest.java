@@ -518,7 +518,9 @@ public class PravegaPerfTest {
 
                 }
             }
-            consumeStats.setReaderGroups(readerGroups);
+            if(consumeStats!=null){
+                consumeStats.setReaderGroups(readerGroups);
+            }
         }
 
         private AtomicLong[] getAtomicNum() {
