@@ -424,6 +424,7 @@ public class PerfStats {
      * @param startTime start time time
      */
     public synchronized void start(long startTime) {
+        log.info("perfStat start");
         if (this.ret == null) {
             this.ret = executor.submit(new QueueProcessor(startTime));
         }
