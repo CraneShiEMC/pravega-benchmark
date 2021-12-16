@@ -520,6 +520,8 @@ public class PravegaPerfTest {
             }
             if(consumeStats!=null){
                 consumeStats.setReaderGroups(readerGroups);
+            }if(produceStats!=null){
+                produceStats.setReaderGroups(readerGroups);
             }
         }
 
