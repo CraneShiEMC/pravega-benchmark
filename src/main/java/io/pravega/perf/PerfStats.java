@@ -166,8 +166,10 @@ public class PerfStats {
             if (throughputRecorder != null) {
                 throughputRecorder.record(window.startTime, window.lastTime, window.bytes, window.getMiBPerSecond(), window.count, window.getEventsPerSecond());
             }
-            for (ReaderGroup readerGroup : readerGroups) {
-                log.info("readerGroup {} has unreadBytes {}", readerGroup.getGroupName(), readerGroup.getMetrics().unreadBytes());
+            if(readerGroups.size()>0){
+                for (ReaderGroup readerGroup : readerGroups) {
+                    log.info("readerGroup {} has unreadBytes {}", readerGroup.getGroupName(), readerGroup.getMetrics().unreadBytes());
+                }
             }
             window.print();
             window.reset(time);
