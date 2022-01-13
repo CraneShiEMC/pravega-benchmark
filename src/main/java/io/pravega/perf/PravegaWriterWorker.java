@@ -10,6 +10,7 @@
 
 package io.pravega.perf;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -20,6 +21,7 @@ import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.client.stream.impl.ByteArraySerializer;
 import io.pravega.client.stream.EventWriterConfig;
+import io.pravega.client.stream.impl.ByteBufferSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.google.common.util.concurrent.RateLimiter;
@@ -88,7 +90,7 @@ public class PravegaWriterWorker extends WriterWorker {
         else{
             ret.thenAccept(d -> {
                 record.accept(time, System.currentTimeMillis(), data.length);
-                log.info("Event write: {}", new String(data));
+                //log.info("Event write: {}", String.valueOf(data));
             });
         }
         noteTimePeriodically();
@@ -118,7 +120,7 @@ public class PravegaWriterWorker extends WriterWorker {
             return ret;
         }
         else if(isEnableRoutingKey) {
-            String dataString = new String(data);
+            String dataString = String.valueOf(data);
             String routingKey = dataString.split("-")[1];
             ret = producer.writeEvent(routingKey, data);
             

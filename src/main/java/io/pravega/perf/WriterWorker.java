@@ -1,15 +1,19 @@
 /**
  * Copyright (c) 2017 Dell Inc., or its subsidiaries. All Rights Reserved.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
 
 package io.pravega.perf;
 
+import Benchmark.Event.Event;
+import Benchmark.Event.Header;
+import Benchmark.Event.Type;
+import com.google.flatbuffers.FlatBufferBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,13 +37,12 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
     final private Random random = new Random();
     final private String[] routingKeyArray;
     final private Performance perf;
-    //    final private byte[] payload;
+    final private byte[] payload;
     final private int eventsPerSec;
     final private int EventsPerFlush;
     final private boolean writeAndRead;
     final private AtomicLong[] seqNum;
     final private Boolean isEnableRoutingKey;
-    final private byte[] payload;
     final private Boolean isBatch;
     final private int batchSize;
 
@@ -137,9 +140,11 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
     @Override
     public Void call() throws InterruptedException, ExecutionException, IOException {
         try {
+            log.info("run writer worker");
             perf.benchmark();
+            log.info("complete writer worker");
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("writer worker exception", e);
             throw e;
         }
         return null;
@@ -151,10 +156,10 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         for (int i = 0; i < events; i++) {
             //byte[] data = createPayload();
             if(isBatch){
-                recordWrite(createPayload(eventsPerSec*batchSize), stats::recordTime);
+                recordWrite(generateEvent(), stats::recordTime);
             }
             else{
-                recordWrite(payload, stats::recordTime);
+                recordWrite(generateEvent(), stats::recordTime);
             }
         }
         flush();
@@ -168,8 +173,7 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         while (cnt < events) {
             int loopMax = Math.min(EventsPerFlush, events - cnt);
             for (int i = 0; i < loopMax; i++) {
-                //byte[] data = createPayload();
-                eCnt.control(cnt++, recordWrite(payload, stats::recordTime));
+                eCnt.control(cnt++, recordWrite(generateEvent(), stats::recordTime));
             }
             flush();
         }
@@ -183,10 +187,10 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         while ((time - startTime) < msToRun) {
             //byte[] data = createPayload();
             if(isBatch){
-                recordWrite(createPayload(eventsPerSec*batchSize), stats::recordTime);
+                recordWrite(generateEvent(), stats::recordTime);
             }
             else{
-                recordWrite(payload, stats::recordTime);
+                recordWrite(generateEvent(), stats::recordTime);
             }
         }
         flush();
@@ -200,11 +204,10 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         long time = System.currentTimeMillis();
         final EventsController eCnt = new EventsController(time, eventsPerSec);
         long msElapsed = time - startTime;
-        //int cnt = 0;
+//        int cnt = 0;
         while (msElapsed < msToRun) {
             for (int i = 0; (msElapsed < msToRun) && (i < EventsPerFlush); i++) {
-                //byte[] data = createPayload();
-                time = recordWrite(payload, stats::recordTime);
+                time = recordWrite(generateEvent(), stats::recordTime);
                 rateLimiter.acquire(1);
 //                eCnt.control(cnt++, time);
                 msElapsed = time - startTime;
@@ -219,12 +222,11 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
         final ByteBuffer timeBuffer = ByteBuffer.allocate(TIME_HEADER_SIZE);
         final long time = System.currentTimeMillis();
         final EventsController eCnt = new EventsController(time, eventsPerSec);
-        RateLimiter rateLimiter = RateLimiter.create(eventsPerSec);
         for (int i = 0; i < events; i++) {
-            //byte[] data = createPayload();
             byte[] bytes = timeBuffer.putLong(0, System.currentTimeMillis()).array();
             System.arraycopy(bytes, 0, payload, 0, bytes.length);
-            writeData(payload);
+            try {
+                recordWrite(generateEvent(), stats::recordTime);
                 /*
                 flush is required here for following reasons:
                 1. The writeData is called for End to End latency mode; hence make sure that data is sent.
@@ -232,35 +234,68 @@ public abstract class WriterWorker extends Worker implements Callable<Void> {
                    flushing moderates the kafka producer.
                 3. If the flush called after several iterations, then flush may take too much of time.
                 */
-            rateLimiter.acquire(1);
+                eCnt.control(i);
+            } catch (Exception e) {
+                log.error("write exception", e);
+            }
         }
-        flush();
+        try {
+            flush();
+        } catch (Exception e) {
+            log.error("flush exception", e);
+        }
     }
 
+    private byte[] generateEvent(){
+        FlatBufferBuilder builder = new FlatBufferBuilder(1024);
+        long time = System.currentTimeMillis();
+        int headerOffset = Header.createHeader(builder, Type.C2C,
+                builder.createString("dummy-targetStream"),
+                builder.createString("dummy-routingKey"),
+                time);
+        int byteArrayOffset = builder.createByteVector(payload);
+        Event.startEvent(builder);
+        Event.addHeader(builder, headerOffset);
+        Event.addPayload(builder, byteArrayOffset);
+        int eventOffset = Event.endEvent(builder);
+        builder.finish(eventOffset);
+        byte[] event = builder.sizedByteArray();
+//        log.info("event size {}", event.length);
+        return event;
+    }
 
     private void EventsWriterTimeRW() throws InterruptedException, IOException {
         log.info("EventsWriterTimeRW: Running");
         final long msToRun = secondsToRun * MS_PER_SEC;
-        final ByteBuffer timeBuffer = ByteBuffer.allocate(TIME_HEADER_SIZE);
         long time = System.currentTimeMillis();
         final EventsController eCnt = new EventsController(time, eventsPerSec);
+        RateLimiter rateLimiter = RateLimiter.create(eventsPerSec);
+        try {
+            for (int i = 0; (time - startTime) < msToRun; i++) {
 
-        for (int i = 0; (time - startTime) < msToRun; i++) {
-            //byte[] data = createPayload();
-            time = System.currentTimeMillis();
-            byte[] bytes = timeBuffer.putLong(0, System.currentTimeMillis()).array();
-            System.arraycopy(bytes, 0, payload, 0, bytes.length);
-            writeData(payload);
-                /*
-                flush is required here for following reasons:
-                1. The writeData is called for End to End latency mode; hence make sure that data is sent.
-                2. In case of kafka benchmarking, the buffering makes too many writes;
-                   flushing moderates the kafka producer.
-                3. If the flush called after several iterations, then flush may take too much of time.
-                */
-            eCnt.control(i);
+                try {
+                   recordWrite(generateEvent(), stats::recordTime);
+                    /*
+                    flush is required here for following reasons:
+                    1. The writeData is called for End to End latency mode; hence make sure that data is sent.
+                    2. In case of kafka benchmarking, the buffering makes too many writes;
+                       flushing moderates the kafka producer.
+                    3. If the flush called after several iterations, then flush may take too much of time.
+                    */
+                    rateLimiter.acquire(1);
+                    //eCnt.control(i);
+                } catch (Exception e) {
+                    log.error("Exception", e);
+                }
+            }
+        } catch (Throwable t) {
+            log.error("throwable", t);
         }
-        flush();
+        try {
+            flush();
+        } catch (Exception e) {
+            log.error("flush exception", e);
+        }
     }
 
 

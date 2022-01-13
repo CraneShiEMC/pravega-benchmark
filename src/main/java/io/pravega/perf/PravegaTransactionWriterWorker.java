@@ -16,10 +16,12 @@ import io.pravega.client.stream.Transaction;
 import io.pravega.client.stream.TransactionalEventStreamWriter;
 import io.pravega.client.stream.TxnFailedException;
 import io.pravega.client.stream.impl.ByteArraySerializer;
+import io.pravega.client.stream.impl.ByteBufferSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.GuardedBy;
+import java.nio.ByteBuffer;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -88,7 +90,7 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
                     transaction = producer.beginTxn();
                 }
                 if(isEnableRoutingKey) {
-                    String dataString = new String(data);
+                    String dataString = String.valueOf(data);
                     String routingKey = dataString.split("-")[1];
                     transaction.writeEvent(routingKey, data);
 
@@ -96,7 +98,7 @@ public class PravegaTransactionWriterWorker extends WriterWorker {
                     transaction.writeEvent(data);
                 }
                 transaction.flush();
-                log.info("Event write: {}", new String(data));
+                //log.info("Event write: {}", String.valueOf(data));
                 record.accept(time, System.currentTimeMillis(), messageSize);
                 eventCount++;
                 if (eventCount >= transactionsPerCommit) {

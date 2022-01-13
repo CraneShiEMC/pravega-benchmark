@@ -10,8 +10,8 @@ RUN update-ca-certificates
 RUN apt-get update \
     && apt-get install -y \
         maven \
+    && apt-get install -y openjdk-8-jdk \
     && rm -rf /var/lib/apt/lists/*
-
 USER gradle
 
 COPY --chown=gradle:gradle build.gradle /home/gradle/src/build.gradle
@@ -24,13 +24,12 @@ COPY --chown=gradle:gradle src /home/gradle/src/src
 WORKDIR /home/gradle/src
 
 ENV GRADLE_USER_HOME=/home/gradle
-
 RUN gradle installDist \
 --no-daemon --info --stacktrace
 
 # Runtime Container
 
-FROM openjdk:8-jre
+FROM openjdk:8-jdk
 
 ENV APP_NAME=pravega-benchmark
 

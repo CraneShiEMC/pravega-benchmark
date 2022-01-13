@@ -20,6 +20,7 @@ import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.ReaderGroup;
 import io.pravega.client.stream.impl.ByteArraySerializer;
+import io.pravega.client.stream.impl.ByteBufferSerializer;
 import io.pravega.client.stream.impl.ClientFactoryImpl;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -33,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -100,7 +102,7 @@ public class PravegaPerfTest {
         options.addOption("readcsv", true, "CSV file to record read latencies");
         options.addOption("writethroughputcsv", true, "CSV file to record write throughput");
         options.addOption("readthroughputcsv", true, "CSV file to record read throughput");
-        options.addOption("enableConnectionPooling", false, "Set to true to enable connection pooling");
+        options.addOption("enableConnectionPooling", true, "Set to true to enable connection pooling");
         options.addOption("writeWatermarkPeriodMillis", true,
                 "If -1 (default), watermarks will not be written.\n" +
                 "If 0 and not using transactions, watermarks will be written after every event.\n" +
@@ -116,6 +118,8 @@ public class PravegaPerfTest {
         options.addOption("help", false, "Help message");
         options.addOption("enableBatch", true, "whether enable batch write");
         options.addOption("batchSize", true, "batch write size");
+        options.addOption("rwMode",true, "read from month write to day");
+        options.addOption("writeStreamNumber", true, "how many stream to write again from month stream");
         parser = new DefaultParser();
         try {
             commandline = parser.parse(options, args);
@@ -202,7 +206,7 @@ public class PravegaPerfTest {
     static private abstract class Test {
         static final int MAXTIME = 60 * 60 * 24;
         static final int DEFAULT_REPORTING_INTERVAL = 5000;
-        static final int TIMEOUT = 1000;
+        static final int TIMEOUT = 30000;
         static final String SCOPE = "Scope";
 
         final String controllerUri;
@@ -245,6 +249,8 @@ public class PravegaPerfTest {
         final int batchSize;
         final String readStreamName;
         final String writeStreamName;
+        final Boolean rwMode;
+        final int writeStreamNumber;
         protected List<EventStreamWriter<byte[]>> producerList;
 
         Test(long startTime, CommandLine commandline) throws IllegalArgumentException {
@@ -260,6 +266,8 @@ public class PravegaPerfTest {
             batchSize = parseIntOption(commandline, "batchSize", 100);
             readStreamName = parseStringOption(commandline, "readStreamName", "month-stream");
             writeStreamName = parseStringOption(commandline, "writeStreamName", "day-stream");
+            rwMode = parseBooleanOption(commandline,"rwMode", false);
+            writeStreamNumber = parseIntOption(commandline,"writeStreamNumber", 31);
             if (commandline.hasOption("flush")) {
                 int flushEvents = Integer.parseInt(commandline.getOptionValue("flush"));
                 if (flushEvents > 0) {
@@ -360,11 +368,7 @@ public class PravegaPerfTest {
 
                 writeAndRead = consumerCount > 0;
 
-                if (writeAndRead) {
-                    produceStats = null;
-                } else {
-                    produceStats = new PerfStats("Writing", reportingInterval, messageSize, writeFile, writeThroughputFile);
-                }
+                produceStats = new PerfStats("Writing", reportingInterval, messageSize, writeFile, writeThroughputFile);
 
                 eventsPerProducer = (events + producerCount - 1) / producerCount;
                 if (throughput < 0 && runtimeSec > 0) {
@@ -470,7 +474,7 @@ public class PravegaPerfTest {
                     .maxBackoffMillis(5000).build(),
                     bgExecutor);
 
-                String newRdGrpName = rdGrpName;
+                String newRdGrpName = rdGrpName + System.currentTimeMillis();
                 PravegaStreamHandler streamHandle = new PravegaStreamHandler(scopeName, streamName, newRdGrpName, controllerUri, segmentCount,
                         segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
 
@@ -487,21 +491,23 @@ public class PravegaPerfTest {
                     readerGroups.add(readerGroup);
                     log.info("-------------- Create reader group {} -------------------", newRdGrpName);
                 }
-                streamMap.put(streamName, newRdGrpName);
+            streamMap.put(streamName, newRdGrpName);
             factory = new ClientFactoryImpl(scopeName, controller, new SocketConnectionFactoryImpl(clientConfig));
             // create day stream
             log.info("-------------- starting create day stream: {} -------------------",writeStreamName);
-            for(int i=0; i< 31; i++){
-                String newCreateStream =  writeStreamName + (i+1);
-                newRdGrpName = streamName + "RG";
-                streamHandle = new PravegaStreamHandler(scopeName, newCreateStream, newRdGrpName, controllerUri, segmentCount,
-                        segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
-                streamHandle.create();
+            log.info("rwMode {}",rwMode);
+            if(rwMode){
+                for(int i=0; i< writeStreamNumber; i++){
+                    String newCreateStream =  writeStreamName + (i+1);
+
+                    PravegaStreamHandler streamHandle2 = new PravegaStreamHandler(scopeName, newCreateStream, null , controllerUri, segmentCount,
+                            segmentScaleKBps, segmentScaleEventsPerSecond, scaleFactor, TIMEOUT, controller, bgExecutor, createScope);
+                    streamHandle2.create();
                     EventStreamWriter<byte[]> newProducer = factory.createEventWriter(newCreateStream,
-                    new ByteArraySerializer(),
-                    EventWriterConfig.builder()
-                        .enableConnectionPooling(enableConnectionPooling)
-                        .build());
+                            new ByteArraySerializer(),
+                            EventWriterConfig.builder()
+                                    .enableConnectionPooling(enableConnectionPooling)
+                                    .build());
                     // if (recreate) {
                     //     streamHandle.recreate();
                     // } else {
@@ -509,7 +515,13 @@ public class PravegaPerfTest {
                     // }
                     log.info("-------------- day stream {} created-------------------",newCreateStream);
                     producerList.add(newProducer);
-                
+
+                }
+            }
+            if(consumeStats!=null){
+                consumeStats.setReaderGroups(readerGroups);
+            }if(produceStats!=null){
+                produceStats.setReaderGroups(readerGroups);
             }
         }
 
@@ -571,18 +583,18 @@ public class PravegaPerfTest {
                 allReaders = new ArrayList<>();
                 log.info("get consumers, streamMap size {}", streamMap.size());
                 streamMap.forEach((streamName, rdGrpName) -> {
-                    final ReaderWorker reader;
-                    reader = new PravegaReaderWorker(0, eventsPerConsumer,
-                                    runtimeSec, startTime, consumeStats,
-                                    rdGrpName, TIMEOUT, writeAndRead, factory,
-                                    io.pravega.client.stream.Stream.of(scopeName, streamName),
-                                    readWatermarkPeriodMillis, batchSize, producerList,enableBatch);
-                           
-                    log.info("---------- Create  reader for stream {} ----------", streamName);
-                    allReaders.add(reader);
-                    log.info("reader number {}",allReaders.size());
+                    for(int i =0 ; i < consumerCount; i++) {
+                        final ReaderWorker reader;
+                        reader = new PravegaReaderWorker(i, eventsPerConsumer,
+                                runtimeSec, startTime, consumeStats,
+                                rdGrpName, TIMEOUT, writeAndRead, factory,
+                                io.pravega.client.stream.Stream.of(scopeName, streamName),
+                                readWatermarkPeriodMillis, batchSize, producerList, enableBatch, writeStreamNumber);
+                        log.info("---------- Create  reader {} for stream {} ----------", i, streamName);
+                        allReaders.add(reader);
+                    }
                 });
-
+                log.info("reader number {}", allReaders.size());
             } else {
                 allReaders = null;
             }
